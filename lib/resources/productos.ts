@@ -1,0 +1,65 @@
+import { Boxes } from "lucide-react";
+import type { ResourceConfig } from "./types";
+
+export const productos: ResourceConfig = {
+  key: "productos",
+  path: "/archivos/productos",
+  singular: "Producto",
+  plural: "Productos",
+  article: "el",
+  icon: Boxes,
+  description: "Insumos, medicamentos y productos con control de stock.",
+  searchKeys: ["nombre", "categoria", "unidad"],
+  titleKey: "nombre",
+  subtitleKey: "categoria",
+  columns: [
+    { key: "nombre", header: "Producto", type: "primary", subKey: "unidad" },
+    {
+      key: "categoria",
+      header: "Categoría",
+      type: "badge",
+      colorMap: {
+        Métodos: "#e6007e",
+        Medicamentos: "#0091d5",
+        Insumos: "#00b8a9",
+        Laboratorio: "#7c3aed",
+        "Rayos X": "#f5a623",
+        Escritorio: "#64748b",
+      },
+    },
+    { key: "unidad", header: "Unidad", hideOnMobile: true },
+    { key: "minimoCentral", header: "Mín. Central", hideOnMobile: true },
+    { key: "minimoLocal", header: "Mín. Local", hideOnMobile: true },
+  ],
+  fields: [
+    { name: "nombre", label: "Nombre del producto", type: "uppercase", required: true, span: 2 },
+    {
+      name: "categoria",
+      label: "Categoría",
+      type: "select",
+      required: true,
+      span: 1,
+      options: ["Métodos", "Medicamentos", "Insumos", "Laboratorio", "Rayos X", "Escritorio"].map((v) => ({ value: v, label: v })),
+    },
+    {
+      name: "unidad",
+      label: "Unidad de medida",
+      type: "select",
+      required: true,
+      span: 1,
+      options: ["Unidad", "Caja", "Frasco", "Ampolla", "Tableta", "Mililitro", "Gramo", "Kit"].map((v) => ({ value: v, label: v })),
+    },
+    { name: "minimoCentral", label: "Stock mínimo central", type: "number", required: true, span: 1 },
+    { name: "minimoLocal", label: "Stock mínimo local", type: "number", required: true, span: 1 },
+  ],
+  seed: [
+    { id: 1, nombre: "Dispositivo intrauterino (DIU)", categoria: "Métodos", unidad: "Unidad", minimoCentral: 50, minimoLocal: 10 },
+    { id: 2, nombre: "Ampolla anticonceptiva mensual", categoria: "Métodos", unidad: "Ampolla", minimoCentral: 120, minimoLocal: 30 },
+    { id: 3, nombre: "Guantes quirúrgicos estériles", categoria: "Insumos", unidad: "Caja", minimoCentral: 40, minimoLocal: 8 },
+    { id: 4, nombre: "Gel para ecografía", categoria: "Insumos", unidad: "Frasco", minimoCentral: 25, minimoLocal: 6 },
+    { id: 5, nombre: "Ácido fólico 5 mg", categoria: "Medicamentos", unidad: "Tableta", minimoCentral: 500, minimoLocal: 100 },
+    { id: 6, nombre: "Tubo de ensayo tapa lila", categoria: "Laboratorio", unidad: "Unidad", minimoCentral: 300, minimoLocal: 60 },
+    { id: 7, nombre: "Película radiográfica", categoria: "Rayos X", unidad: "Caja", minimoCentral: 15, minimoLocal: 3 },
+    { id: 8, nombre: "Papel térmico para ecógrafo", categoria: "Escritorio", unidad: "Unidad", minimoCentral: 30, minimoLocal: 5 },
+  ],
+};
