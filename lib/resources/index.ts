@@ -32,5 +32,13 @@ export function getResource(key: string): ResourceConfig | undefined {
   return RESOURCE_MAP[key];
 }
 
+/** Mapea la clave del recurso al segmento del endpoint en la API. */
+const ENDPOINT_OVERRIDES: Record<string, string> = {
+  laboratorio: "laboratorios",
+};
+export function endpointFor(key: string): string {
+  return ENDPOINT_OVERRIDES[key] ?? key;
+}
+
 export type { ResourceConfig } from "./types";
 export type { Row, FieldDef, ColumnDef } from "./types";

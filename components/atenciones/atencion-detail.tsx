@@ -10,14 +10,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -28,9 +20,19 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import { formatPEN, formatDateLong, initials } from "@/lib/format";
-import { useAtenciones, useAtencion, type AtnEstado } from "@/lib/data/atenciones-store";
+import { api } from "@/lib/api/client";
+import { useApiItem } from "@/lib/api/hooks";
+import { type Atencion, type AtnEstado } from "@/lib/api/atenciones";
 import { PatientHistory } from "./patient-history";
 import type { Row } from "@/lib/resources/types";
 
@@ -42,9 +44,7 @@ const ESTADO_COLOR: Record<AtnEstado, string> = {
 
 export function AtencionDetail({ id }: { id: number }) {
   const router = useRouter();
-  const hydrated = useAtenciones((s) => s.hydrated);
-  const removeAtencion = useAtenciones((s) => s.removeAtencion);
-  const atencion = useAtencion(id);
+  const { data: atencion, loading } = useApiItem<Atencion>(id ? `/atenciones/${id}` : null);
 
   const header = (
     <>
@@ -84,10 +84,14 @@ export function AtencionDetail({ id }: { id: number }) {
                       <AlertDialogCancel>Cancelar</AlertDialogCancel>
                       <AlertDialogAction
                         className="bg-destructive text-white hover:bg-destructive/90"
-                        onClick={() => {
-                          removeAtencion(id);
-                          toast.success("Atención eliminada");
-                          router.push("/movimientos/atenciones");
+                        onClick={async () => {
+                          try {
+                            await api.del(`/atenciones/${id}`);
+                            toast.success("Atención eliminada");
+                            router.push("/movimientos/atenciones");
+                          } catch (e) {
+                            toast.error(e instanceof Error ? e.message : "No se pudo eliminar");
+                          }
                         }}
                       >
                         Eliminar
@@ -103,7 +107,7 @@ export function AtencionDetail({ id }: { id: number }) {
     </>
   );
 
-  if (!hydrated) return <div>{header}<Skeleton className="h-96 w-full rounded-2xl" /></div>;
+  if (loading) return <div>{header}<Skeleton className="h-96 w-full rounded-2xl" /></div>;
   if (!atencion)
     return (
       <div>
@@ -112,16 +116,15 @@ export function AtencionDetail({ id }: { id: number }) {
       </div>
     );
 
-  const nombre = `${atencion.paciente.nombres} ${atencion.paciente.apellidos}`;
+  const nombre = `${atencion.paciente?.nombres ?? ""} ${atencion.paciente?.apellidos ?? ""}`.trim();
   const dt = new Date(atencion.fecha);
-  const color = ESTADO_COLOR[atencion.estado];
+  const color = ESTADO_COLOR[atencion.estado] ?? "#64748b";
 
   return (
     <div>
       {header}
       <div className="grid items-start gap-6 lg:grid-cols-[1.55fr_1fr]">
         <div className="space-y-5">
-          {/* Resumen */}
           <Card>
             <CardHeader className="border-b">
               <div className="flex flex-wrap items-center justify-between gap-3">
@@ -132,7 +135,7 @@ export function AtencionDetail({ id }: { id: number }) {
                   <div>
                     <CardTitle>{nombre}</CardTitle>
                     <p className="text-sm text-muted-foreground">
-                      {atencion.paciente.tipoDoc} {atencion.paciente.numDoc} · {formatDateLong(atencion.fecha)},{" "}
+                      {atencion.paciente?.tipoDoc} {atencion.paciente?.numDoc} · {formatDateLong(atencion.fecha)},{" "}
                       {dt.toLocaleTimeString("es-PE", { hour: "2-digit", minute: "2-digit" })}
                     </p>
                   </div>
@@ -153,12 +156,11 @@ export function AtencionDetail({ id }: { id: number }) {
               </div>
               <div>
                 <p className="text-xs uppercase tracking-wide text-muted-foreground">Registró</p>
-                <p className="mt-0.5 font-medium">{atencion.usuario}</p>
+                <p className="mt-0.5 font-medium">{atencion.usuario?.nombre ?? "—"}</p>
               </div>
             </CardContent>
           </Card>
 
-          {/* Ítems */}
           <Card>
             <CardHeader><CardTitle>Servicios e ítems</CardTitle></CardHeader>
             <CardContent>
@@ -204,7 +206,7 @@ export function AtencionDetail({ id }: { id: number }) {
         </div>
 
         <div className="lg:sticky lg:top-20 lg:self-start">
-          <PatientHistory patient={{ ...atencion.paciente } as unknown as Row} />
+          <PatientHistory patient={atencion.paciente as unknown as Row} />
         </div>
       </div>
     </div>

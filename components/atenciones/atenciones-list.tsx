@@ -4,7 +4,7 @@ import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Eye, MoreHorizontal, Pencil, Plus, Search, Trash2 } from "lucide-react";
+import { Eye, MoreHorizontal, Pencil, Plus, Search, Trash2, TriangleAlert } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -36,7 +36,9 @@ import {
 } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
 import { formatPEN, initials } from "@/lib/format";
-import { useAtenciones, isToday, type Atencion, type AtnEstado } from "@/lib/data/atenciones-store";
+import { api } from "@/lib/api/client";
+import { useApiList } from "@/lib/api/hooks";
+import { isToday, type Atencion, type AtnEstado } from "@/lib/api/atenciones";
 
 const ESTADO_COLOR: Record<AtnEstado, string> = {
   Pagado: "#16a34a",
@@ -51,9 +53,7 @@ type Filtro = "hoy" | "anteriores" | "todas";
 
 export function AtencionesList() {
   const router = useRouter();
-  const atenciones = useAtenciones((s) => s.atenciones);
-  const hydrated = useAtenciones((s) => s.hydrated);
-  const removeAtencion = useAtenciones((s) => s.removeAtencion);
+  const { data: atenciones, loading, error, refetch } = useApiList<Atencion>("/atenciones");
 
   const [filtro, setFiltro] = React.useState<Filtro>("hoy");
   const [query, setQuery] = React.useState("");
@@ -71,8 +71,8 @@ export function AtencionesList() {
       .filter((a) =>
         !q
           ? true
-          : `${a.paciente.nombres} ${a.paciente.apellidos}`.toLowerCase().includes(q) ||
-            a.paciente.numDoc.toLowerCase().includes(q),
+          : `${a.paciente?.nombres} ${a.paciente?.apellidos}`.toLowerCase().includes(q) ||
+            String(a.paciente?.numDoc ?? "").toLowerCase().includes(q),
       )
       .sort((a, b) => +new Date(b.fecha) - +new Date(a.fecha));
   }, [atenciones, filtro, query]);
@@ -82,6 +82,18 @@ export function AtencionesList() {
     { key: "anteriores", label: "Anteriores", n: counts.anteriores },
     { key: "todas", label: "Todas", n: counts.todas },
   ];
+
+  async function confirmDelete() {
+    if (!target) return;
+    try {
+      await api.del(`/atenciones/${target.id}`);
+      toast.success("Atención eliminada");
+      refetch();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "No se pudo eliminar");
+    }
+    setTarget(null);
+  }
 
   return (
     <div>
@@ -127,7 +139,14 @@ export function AtencionesList() {
           </div>
         </div>
 
-        {!hydrated ? (
+        {error ? (
+          <div className="flex flex-col items-center gap-2 py-16 text-center text-sm text-muted-foreground">
+            <TriangleAlert className="h-6 w-6 text-destructive" />
+            No se pudo cargar la información.
+            <span className="text-xs">{error}</span>
+            <Button variant="outline" size="sm" onClick={refetch} className="mt-1">Reintentar</Button>
+          </div>
+        ) : loading ? (
           <div className="space-y-2 p-4">
             {Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-12 w-full rounded-lg" />)}
           </div>
@@ -150,8 +169,8 @@ export function AtencionesList() {
             <TableBody>
               {rows.map((a) => {
                 const dt = new Date(a.fecha);
-                const nombre = `${a.paciente.nombres} ${a.paciente.apellidos}`;
-                const color = ESTADO_COLOR[a.estado];
+                const nombre = `${a.paciente?.nombres ?? ""} ${a.paciente?.apellidos ?? ""}`.trim();
+                const color = ESTADO_COLOR[a.estado] ?? "#64748b";
                 return (
                   <TableRow key={a.id} className="cursor-pointer" onClick={() => router.push(`/movimientos/atenciones/${a.id}`)}>
                     <TableCell>
@@ -165,7 +184,9 @@ export function AtencionesList() {
                         </span>
                         <div className="min-w-0">
                           <div className="truncate font-medium">{nombre}</div>
-                          <div className="text-xs text-muted-foreground">{a.paciente.tipoDoc} {a.paciente.numDoc}</div>
+                          <div className="text-xs text-muted-foreground">
+                            {a.paciente?.tipoDoc} {a.paciente?.numDoc}
+                          </div>
                         </div>
                       </div>
                     </TableCell>
@@ -216,21 +237,14 @@ export function AtencionesList() {
             <AlertDialogTitle>¿Eliminar atención?</AlertDialogTitle>
             <AlertDialogDescription>
               Se eliminará la atención de{" "}
-              <strong className="text-foreground">{target ? `${target.paciente.nombres} ${target.paciente.apellidos}` : ""}</strong>. Esta acción no se puede deshacer.
+              <strong className="text-foreground">
+                {target ? `${target.paciente?.nombres} ${target.paciente?.apellidos}` : ""}
+              </strong>. Esta acción no se puede deshacer.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction
-              className="bg-destructive text-white hover:bg-destructive/90"
-              onClick={() => {
-                if (target) {
-                  removeAtencion(target.id);
-                  toast.success("Atención eliminada");
-                }
-                setTarget(null);
-              }}
-            >
+            <AlertDialogAction className="bg-destructive text-white hover:bg-destructive/90" onClick={confirmDelete}>
               Eliminar
             </AlertDialogAction>
           </AlertDialogFooter>

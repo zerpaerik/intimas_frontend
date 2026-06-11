@@ -4,12 +4,7 @@ import * as React from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
-  ArrowLeft,
-  ClipboardCheck,
-  HeartPulse,
-  Plus,
-  Trash2,
-  UserSearch,
+  ArrowLeft, ClipboardCheck, HeartPulse, Loader2, Plus, Trash2, UserSearch,
 } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
@@ -18,21 +13,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { formatPEN } from "@/lib/format";
-import { useRows } from "@/lib/data/resource-store";
+import { api } from "@/lib/api/client";
+import { useApiItem, useApiList } from "@/lib/api/hooks";
+import { type Atencion } from "@/lib/api/atenciones";
 import { useAuth } from "@/lib/auth/store";
-import {
-  useAtenciones,
-  useAtencion,
-  type Atencion,
-} from "@/lib/data/atenciones-store";
 import type { Row } from "@/lib/resources/types";
 import { PatientSearch } from "./patient-search";
 import { PatientHistory } from "./patient-history";
@@ -63,9 +51,7 @@ function Step({ n, title, children, icon: Icon }: { n: number; title: string; ic
   return (
     <section className="rounded-2xl border bg-card p-5">
       <div className="mb-4 flex items-center gap-2.5">
-        <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-brand-gradient text-xs font-bold text-white">
-          {n}
-        </span>
+        <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-brand-gradient text-xs font-bold text-white">{n}</span>
         <h2 className="flex items-center gap-2 font-heading text-base font-bold">
           <Icon className="h-4 w-4 text-brand" />
           {title}
@@ -78,11 +64,9 @@ function Step({ n, title, children, icon: Icon }: { n: number; title: string; ic
 
 function RegistroForm({ mode, initial }: { mode: "create" | "edit"; initial?: Atencion }) {
   const router = useRouter();
-  const createAtencion = useAtenciones((s) => s.createAtencion);
-  const updateAtencion = useAtenciones((s) => s.updateAtencion);
-  const userName = useAuth((s) => s.session?.user.name ?? "—");
-  const personal = useRows("personal");
-  const profesionales = useRows("profesionales");
+  const userId = useAuth((s) => s.session?.user.id);
+  const personal = useApiList<Row>("/personal");
+  const profesionales = useApiList<Row>("/profesionales");
 
   const [patient, setPatient] = React.useState<Row | null>(
     initial ? ({ ...initial.paciente } as unknown as Row) : null,
@@ -90,17 +74,18 @@ function RegistroForm({ mode, initial }: { mode: "create" | "edit"; initial?: At
   const [origenTipo, setOrigenTipo] = React.useState(initial?.origenTipo ?? "Personal");
   const [origenValor, setOrigenValor] = React.useState(initial?.origenValor ?? "");
   const [items, setItems] = React.useState<LineItem[]>(
-    initial ? initial.items.map((it, i) => ({ uid: i + 1, ...it })) : [],
+    initial ? initial.items.map((it, i) => ({ uid: i + 1, kind: it.kind, nombre: it.nombre, monto: it.monto, abono: it.abono, pago: it.pago })) : [],
   );
   const [observaciones, setObservaciones] = React.useState(initial?.observaciones ?? "");
   const [pickerOpen, setPickerOpen] = React.useState(false);
+  const [saving, setSaving] = React.useState(false);
   const uid = React.useRef((initial?.items.length ?? 0) + 1);
 
   const origenOptions =
     origenTipo === "Personal"
-      ? personal.map((p) => `${p.nombres} ${p.apellidos}`)
+      ? personal.data.map((p) => `${p.nombres} ${p.apellidos}`)
       : origenTipo === "Profesional"
-        ? profesionales.map((p) => `${p.nombres} ${p.apellidos}`)
+        ? profesionales.data.map((p) => `${p.nombres} ${p.apellidos}`)
         : [];
 
   const total = items.reduce((a, b) => a + (b.monto || 0), 0);
@@ -108,44 +93,37 @@ function RegistroForm({ mode, initial }: { mode: "create" | "edit"; initial?: At
   const saldo = total - abono;
 
   function addItem(item: CatalogItem) {
-    setItems((prev) => [
-      ...prev,
-      { uid: uid.current++, kind: item.kind, nombre: item.nombre, monto: item.precio, abono: item.precio, pago: "Efectivo" },
-    ]);
+    setItems((prev) => [...prev, { uid: uid.current++, kind: item.kind, nombre: item.nombre, monto: item.precio, abono: item.precio, pago: "Efectivo" }]);
   }
   const patchItem = (id: number, patch: Partial<LineItem>) =>
     setItems((prev) => prev.map((it) => (it.uid === id ? { ...it, ...patch } : it)));
   const removeItem = (id: number) => setItems((prev) => prev.filter((it) => it.uid !== id));
 
-  function guardar() {
+  async function guardar() {
     if (!patient) return toast.error("Primero selecciona o crea un paciente.");
     if (items.length === 0) return toast.error("Agrega al menos un ítem a la atención.");
-    const paciente = {
-      id: Number(patient.id),
-      nombres: String(patient.nombres ?? ""),
-      apellidos: String(patient.apellidos ?? ""),
-      tipoDoc: String(patient.tipoDoc ?? ""),
-      numDoc: String(patient.numDoc ?? ""),
-      sexo: String(patient.sexo ?? "Femenino"),
-      fechaNacimiento: patient.fechaNacimiento ? String(patient.fechaNacimiento) : undefined,
-      telefono: patient.telefono ? String(patient.telefono) : undefined,
-    };
-    const input = {
-      paciente,
+    const payload = {
+      pacienteId: Number(patient.id),
       origenTipo,
       origenValor,
-      items: items.map(({ uid: _u, ...rest }) => rest),
       observaciones,
-      usuario: userName,
+      usuarioId: userId,
+      items: items.map(({ uid: _u, ...rest }) => rest),
     };
-    if (mode === "create") {
-      const a = createAtencion(input);
-      toast.success(`Atención registrada · ${formatPEN(total)}`);
-      router.push(`/movimientos/atenciones/${a.id}`);
-    } else if (initial) {
-      updateAtencion(initial.id, input);
-      toast.success("Atención actualizada");
-      router.push(`/movimientos/atenciones/${initial.id}`);
+    setSaving(true);
+    try {
+      if (mode === "create") {
+        const a = await api.post<Atencion>("/atenciones", payload);
+        toast.success(`Atención registrada · ${formatPEN(total)}`);
+        router.push(`/movimientos/atenciones/${a.id}`);
+      } else if (initial) {
+        await api.patch(`/atenciones/${initial.id}`, payload);
+        toast.success("Atención actualizada");
+        router.push(`/movimientos/atenciones/${initial.id}`);
+      }
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "No se pudo guardar");
+      setSaving(false);
     }
   }
 
@@ -153,9 +131,7 @@ function RegistroForm({ mode, initial }: { mode: "create" | "edit"; initial?: At
     <div>
       <p className="mb-2 text-sm text-muted-foreground">
         Movimientos <span className="px-1">›</span>
-        <button onClick={() => router.push("/movimientos/atenciones")} className="hover:text-foreground">
-          Atenciones
-        </button>
+        <button onClick={() => router.push("/movimientos/atenciones")} className="hover:text-foreground">Atenciones</button>
         <span className="px-1">›</span>
         <span className="text-foreground">{mode === "create" ? "Nueva" : "Editar"}</span>
       </p>
@@ -182,10 +158,7 @@ function RegistroForm({ mode, initial }: { mode: "create" | "edit"; initial?: At
                 <button
                   key={t}
                   type="button"
-                  onClick={() => {
-                    setOrigenTipo(t);
-                    setOrigenValor("");
-                  }}
+                  onClick={() => { setOrigenTipo(t); setOrigenValor(""); }}
                   className={cn(
                     "rounded-lg border px-3.5 py-2 text-sm font-medium transition-colors",
                     origenTipo === t ? "border-brand bg-brand/10 text-brand" : "hover:bg-accent/50",
@@ -288,8 +261,8 @@ function RegistroForm({ mode, initial }: { mode: "create" | "edit"; initial?: At
                 <p className={cn("font-heading text-xl font-bold", saldo > 0 && "text-destructive")}>{formatPEN(saldo)}</p>
               </div>
             </div>
-            <Button className="mt-4 h-11 w-full bg-brand-gradient text-white" onClick={guardar}>
-              <ClipboardCheck className="h-4 w-4" />
+            <Button className="mt-4 h-11 w-full bg-brand-gradient text-white" onClick={guardar} disabled={saving}>
+              {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <ClipboardCheck className="h-4 w-4" />}
               {mode === "create" ? "Registrar atención" : "Guardar cambios"}
             </Button>
           </div>
@@ -319,11 +292,10 @@ function RegistroForm({ mode, initial }: { mode: "create" | "edit"; initial?: At
 
 export function AtencionRegistro({ atencionId }: { atencionId?: number }) {
   const router = useRouter();
-  const hydrated = useAtenciones((s) => s.hydrated);
-  const existing = useAtencion(atencionId ?? -1);
   const mode: "create" | "edit" = atencionId ? "edit" : "create";
+  const { data: existing, loading } = useApiItem<Atencion>(atencionId ? `/atenciones/${atencionId}` : null);
 
-  if (mode === "edit" && !hydrated) {
+  if (mode === "edit" && loading) {
     return <Skeleton className="h-[28rem] w-full rounded-2xl" />;
   }
   if (mode === "edit" && !existing) {
@@ -331,13 +303,11 @@ export function AtencionRegistro({ atencionId }: { atencionId?: number }) {
       <div className="rounded-2xl border border-dashed py-20 text-center text-muted-foreground">
         No se encontró la atención solicitada.
         <div className="mt-4">
-          <Button variant="outline" onClick={() => router.push("/movimientos/atenciones")}>
-            Volver al listado
-          </Button>
+          <Button variant="outline" onClick={() => router.push("/movimientos/atenciones")}>Volver al listado</Button>
         </div>
       </div>
     );
   }
 
-  return <RegistroForm mode={mode} initial={mode === "edit" ? existing : undefined} />;
+  return <RegistroForm mode={mode} initial={mode === "edit" ? existing ?? undefined : undefined} />;
 }

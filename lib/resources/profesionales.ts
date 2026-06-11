@@ -23,7 +23,13 @@ export const profesionales: ResourceConfig = {
   searchKeys: ["nombres", "apellidos", "cmp", "especialidad", "centro"],
   titleKey: "_nombre",
   subtitleKey: "especialidad",
-  derive: (r) => ({ _nombre: `${r.nombres ?? ""} ${r.apellidos ?? ""}`.trim() }),
+  derive: (r) => ({
+    _nombre: `${r.nombres ?? ""} ${r.apellidos ?? ""}`.trim(),
+    centro:
+      (r.centro && typeof r.centro === "object"
+        ? (r.centro as { nombre?: string }).nombre
+        : r.centro) ?? "",
+  }),
   columns: [
     { key: "_nombre", header: "Profesional", type: "primary", subKey: "cmp" },
     {
@@ -57,7 +63,7 @@ export const profesionales: ResourceConfig = {
       span: 1,
       options: ESPECIALIDADES.map((v) => ({ value: v, label: v })),
     },
-    { name: "centro", label: "Centro", type: "select", optionsFrom: "centros", span: 1 },
+    { name: "centroId", label: "Centro", type: "select", optionsFrom: "centros", span: 1 },
     { name: "telefono", label: "Teléfono", type: "tel", span: 1 },
   ],
   seed: [

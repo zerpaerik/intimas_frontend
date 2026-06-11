@@ -6,7 +6,7 @@ import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
-import { ArrowLeft, Save } from "lucide-react";
+import { ArrowLeft, Loader2, Save } from "lucide-react";
 
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
@@ -24,9 +24,10 @@ import {
 import { Card, CardContent } from "@/components/ui/card";
 import { MultiSelect } from "@/components/forms/multi-select";
 import { cn } from "@/lib/utils";
-import { getResource } from "@/lib/resources";
+import { getResource, endpointFor } from "@/lib/resources";
 import type { FieldDef, ResourceConfig, Row, SelectOption } from "@/lib/resources/types";
-import { useData, useRow } from "@/lib/data/resource-store";
+import { api } from "@/lib/api/client";
+import { useApiItem, useApiList } from "@/lib/api/hooks";
 
 const NUMERIC = ["number", "currency", "percent"];
 
@@ -50,11 +51,17 @@ function buildSchema(fields: FieldDef[]) {
   return z.object(shape);
 }
 
-function buildDefaults(fields: FieldDef[], existing?: Row) {
+function buildDefaults(fields: FieldDef[], existing?: Row | null) {
   const d: Record<string, unknown> = {};
   for (const f of fields) {
     if (f.type === "multiselect") {
-      d[f.name] = Array.isArray(existing?.[f.name]) ? existing![f.name] : [];
+      const v = existing?.[f.name];
+      d[f.name] = Array.isArray(v)
+        ? v.map((x) => (typeof x === "object" && x ? String((x as { id: number }).id) : String(x)))
+        : [];
+    } else if (f.type === "date") {
+      const v = existing?.[f.name];
+      d[f.name] = v ? String(v).slice(0, 10) : "";
     } else {
       d[f.name] = existing?.[f.name] != null ? String(existing[f.name]) : "";
     }
@@ -66,54 +73,60 @@ function FormInner({
   cfg,
   mode,
   existing,
+  optionsData,
 }: {
   cfg: ResourceConfig;
   mode: "create" | "edit";
-  existing?: Row;
+  existing?: Row | null;
+  optionsData: Record<string, Row[]>;
 }) {
   const router = useRouter();
-  const data = useData((s) => s.data);
-  const create = useData((s) => s.create);
-  const update = useData((s) => s.update);
-
+  const endpoint = `/${endpointFor(cfg.key)}`;
   const schema = React.useMemo(() => buildSchema(cfg.fields), [cfg]);
   const defaults = React.useMemo(() => buildDefaults(cfg.fields, existing), [cfg, existing]);
 
   const {
     control,
     handleSubmit,
-    formState: { errors },
+    formState: { errors, isSubmitting },
   } = useForm({ resolver: zodResolver(schema), defaultValues: defaults });
 
   function resolveOptions(field: FieldDef): SelectOption[] {
     if (field.options) return field.options;
     if (field.optionsFrom) {
       const rel = getResource(field.optionsFrom);
-      const rows = data[field.optionsFrom] ?? [];
       const key = rel?.titleKey ?? "nombre";
-      return rows.map((r) => {
-        const v = String(r[key] ?? "");
-        return { value: v, label: v };
-      });
+      return (optionsData[field.optionsFrom] ?? []).map((r) => ({
+        value: String(r.id),
+        label: String(r[key]),
+      }));
     }
     return [];
   }
 
-  function onSubmit(values: Record<string, unknown>) {
+  async function onSubmit(values: Record<string, unknown>) {
     const payload: Record<string, unknown> = { ...values };
     for (const f of cfg.fields) {
       if (NUMERIC.includes(f.type)) {
         payload[f.name] = values[f.name] === "" ? 0 : Number(values[f.name]);
+      } else if (f.optionsFrom && f.type === "select") {
+        payload[f.name] = values[f.name] === "" ? null : Number(values[f.name]);
+      } else if (f.optionsFrom && f.type === "multiselect") {
+        payload[f.name] = ((values[f.name] as string[]) ?? []).map(Number);
       }
     }
-    if (mode === "create") {
-      const created = create(cfg.key, payload);
-      toast.success(`${cfg.singular} creado correctamente`);
-      router.push(`${cfg.path}/${created.id}`);
-    } else if (existing) {
-      update(cfg.key, existing.id, payload);
-      toast.success(`${cfg.singular} actualizado`);
-      router.push(`${cfg.path}/${existing.id}`);
+    try {
+      if (mode === "create") {
+        const created = await api.post<Row>(endpoint, payload);
+        toast.success(`${cfg.singular} creado correctamente`);
+        router.push(`${cfg.path}/${created.id}`);
+      } else if (existing) {
+        await api.patch(`${endpoint}/${existing.id}`, payload);
+        toast.success(`${cfg.singular} actualizado`);
+        router.push(`${cfg.path}/${existing.id}`);
+      }
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "No se pudo guardar");
     }
   }
 
@@ -125,10 +138,7 @@ function FormInner({
             {cfg.fields.map((f) => {
               const err = errors[f.name]?.message as string | undefined;
               return (
-                <div
-                  key={f.name}
-                  className={cn("space-y-1.5", f.span === 2 && "sm:col-span-2")}
-                >
+                <div key={f.name} className={cn("space-y-1.5", f.span === 2 && "sm:col-span-2")}>
                   <Label htmlFor={f.name}>
                     {f.label}
                     {f.required && <span className="ml-0.5 text-destructive">*</span>}
@@ -140,10 +150,7 @@ function FormInner({
                       if (f.type === "select") {
                         const opts = resolveOptions(f);
                         return (
-                          <Select
-                            value={(field.value as string) || undefined}
-                            onValueChange={field.onChange}
-                          >
+                          <Select value={(field.value as string) || undefined} onValueChange={field.onChange}>
                             <SelectTrigger id={f.name} className="w-full" aria-invalid={!!err}>
                               <SelectValue placeholder={f.placeholder ?? "Selecciona…"} />
                             </SelectTrigger>
@@ -169,13 +176,7 @@ function FormInner({
                       }
                       if (f.type === "textarea") {
                         return (
-                          <Textarea
-                            id={f.name}
-                            placeholder={f.placeholder}
-                            aria-invalid={!!err}
-                            {...field}
-                            value={field.value as string}
-                          />
+                          <Textarea id={f.name} placeholder={f.placeholder} aria-invalid={!!err} {...field} value={field.value as string} />
                         );
                       }
                       const isNum = NUMERIC.includes(f.type);
@@ -184,9 +185,7 @@ function FormInner({
                       return (
                         <div className="relative">
                           {isCurrency && (
-                            <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
-                              S/
-                            </span>
+                            <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">S/</span>
                           )}
                           <Input
                             id={f.name}
@@ -199,25 +198,17 @@ function FormInner({
                             {...field}
                             value={field.value as string}
                             onChange={(e) =>
-                              field.onChange(
-                                f.type === "uppercase"
-                                  ? e.target.value.toUpperCase()
-                                  : e.target.value,
-                              )
+                              field.onChange(f.type === "uppercase" ? e.target.value.toUpperCase() : e.target.value)
                             }
                           />
                           {isPercent && (
-                            <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
-                              %
-                            </span>
+                            <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">%</span>
                           )}
                         </div>
                       );
                     }}
                   />
-                  {f.help && !err && (
-                    <p className="text-xs text-muted-foreground">{f.help}</p>
-                  )}
+                  {f.help && !err && <p className="text-xs text-muted-foreground">{f.help}</p>}
                   {err && <p className="text-xs text-destructive">{err}</p>}
                 </div>
               );
@@ -228,8 +219,8 @@ function FormInner({
             <Button type="button" variant="outline" onClick={() => router.back()}>
               Cancelar
             </Button>
-            <Button type="submit" className="bg-brand-gradient text-white">
-              <Save className="h-4 w-4" />
+            <Button type="submit" disabled={isSubmitting} className="bg-brand-gradient text-white">
+              {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
               {mode === "create" ? "Crear" : "Guardar cambios"}
             </Button>
           </div>
@@ -250,15 +241,27 @@ export function ResourceForm({
 }) {
   const router = useRouter();
   const cfg = getResource(resourceKey);
-  const hydrated = useData((s) => s.hydrated);
-  const existing = useRow(resourceKey, id ?? -1);
+  const endpoint = cfg ? `/${endpointFor(cfg.key)}` : null;
+
+  const { data: existing, loading } = useApiItem<Row>(
+    mode === "edit" && endpoint && id ? `${endpoint}/${id}` : null,
+  );
+
+  const optKeys = React.useMemo(
+    () => [...new Set((cfg?.fields ?? []).filter((f) => f.optionsFrom).map((f) => f.optionsFrom!))],
+    [cfg],
+  );
+  const list0 = useApiList<Row>(optKeys[0] ? `/${endpointFor(optKeys[0])}` : null);
+  const list1 = useApiList<Row>(optKeys[1] ? `/${endpointFor(optKeys[1])}` : null);
+  const optionsData: Record<string, Row[]> = {};
+  if (optKeys[0]) optionsData[optKeys[0]] = list0.data;
+  if (optKeys[1]) optionsData[optKeys[1]] = list1.data;
 
   if (!cfg) {
     return <div className="py-20 text-center text-muted-foreground">Recurso no encontrado.</div>;
   }
 
   const title = mode === "create" ? `Nuevo ${cfg.singular.toLowerCase()}` : `Editar ${cfg.singular.toLowerCase()}`;
-
   const header = (
     <>
       <p className="mb-2 text-sm text-muted-foreground">
@@ -281,9 +284,9 @@ export function ResourceForm({
     </>
   );
 
-  if (mode === "edit" && !hydrated) {
+  if (mode === "edit" && loading) {
     return (
-      <div>
+      <div className="mx-auto max-w-3xl">
         {header}
         <Skeleton className="h-96 w-full rounded-2xl" />
       </div>
@@ -291,7 +294,7 @@ export function ResourceForm({
   }
   if (mode === "edit" && !existing) {
     return (
-      <div>
+      <div className="mx-auto max-w-3xl">
         {header}
         <div className="rounded-2xl border border-dashed py-20 text-center text-muted-foreground">
           No se encontró el registro solicitado.
@@ -303,7 +306,7 @@ export function ResourceForm({
   return (
     <div className="mx-auto max-w-3xl">
       {header}
-      <FormInner cfg={cfg} mode={mode} existing={mode === "edit" ? existing : undefined} />
+      <FormInner cfg={cfg} mode={mode} existing={mode === "edit" ? existing : undefined} optionsData={optionsData} />
     </div>
   );
 }

@@ -24,6 +24,7 @@ import {
   Plus,
   Search,
   Trash2,
+  TriangleAlert,
 } from "lucide-react";
 
 import { PageHeader } from "@/components/page-header";
@@ -57,13 +58,13 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { formatPEN, formatDate, calcAge, initials } from "@/lib/format";
-import { getResource } from "@/lib/resources";
+import { getResource, endpointFor } from "@/lib/resources";
 import type { ColumnDef as RColumn, Row } from "@/lib/resources/types";
-import { useData, useRows } from "@/lib/data/resource-store";
+import { api } from "@/lib/api/client";
+import { useApiList } from "@/lib/api/hooks";
 
 function CellValue({ column, row }: { column: RColumn; row: Row }) {
   const value = row[column.key];
-
   switch (column.type) {
     case "primary": {
       const sub = column.subKey ? row[column.subKey] : undefined;
@@ -94,27 +95,22 @@ function CellValue({ column, row }: { column: RColumn; row: Row }) {
       return (
         <span
           className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium"
-          style={{
-            backgroundColor: `color-mix(in srgb, ${color} 14%, transparent)`,
-            color,
-          }}
+          style={{ backgroundColor: `color-mix(in srgb, ${color} 14%, transparent)`, color }}
         >
           {String(value ?? "—")}
         </span>
       );
     }
     case "tags": {
-      const arr = Array.isArray(value) ? (value as string[]) : [];
+      const arr = Array.isArray(value) ? (value as unknown[]) : [];
       return (
         <div className="flex flex-wrap gap-1">
-          {arr.slice(0, 2).map((t) => (
-            <span key={t} className="rounded-md bg-muted px-1.5 py-0.5 text-xs">
-              {t}
+          {arr.slice(0, 2).map((t, i) => (
+            <span key={i} className="rounded-md bg-muted px-1.5 py-0.5 text-xs">
+              {typeof t === "object" && t ? String((t as { nombre?: string }).nombre) : String(t)}
             </span>
           ))}
-          {arr.length > 2 && (
-            <span className="text-xs text-muted-foreground">+{arr.length - 2}</span>
-          )}
+          {arr.length > 2 && <span className="text-xs text-muted-foreground">+{arr.length - 2}</span>}
         </div>
       );
     }
@@ -126,9 +122,13 @@ function CellValue({ column, row }: { column: RColumn; row: Row }) {
 export function ResourceList({ resourceKey }: { resourceKey: string }) {
   const router = useRouter();
   const cfg = getResource(resourceKey);
-  const rows = useRows(resourceKey);
-  const hydrated = useData((s) => s.hydrated);
-  const remove = useData((s) => s.remove);
+  const endpoint = cfg ? `/${endpointFor(cfg.key)}` : null;
+  const { data: raw, loading, error, refetch } = useApiList<Row>(endpoint);
+
+  const rows = React.useMemo(
+    () => (cfg?.derive ? raw.map((r) => ({ ...r, ...cfg.derive!(r) })) : raw),
+    [raw, cfg],
+  );
 
   const [query, setQuery] = React.useState("");
   const [sorting, setSorting] = React.useState<SortingState>([]);
@@ -174,9 +174,7 @@ export function ResourceList({ resourceKey }: { resourceKey: string }) {
                 <Eye className="h-4 w-4" />
                 Ver detalle
               </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => router.push(`${cfg.path}/${row.original.id}/editar`)}
-              >
+              <DropdownMenuItem onClick={() => router.push(`${cfg.path}/${row.original.id}/editar`)}>
                 <Pencil className="h-4 w-4" />
                 Editar
               </DropdownMenuItem>
@@ -204,12 +202,20 @@ export function ResourceList({ resourceKey }: { resourceKey: string }) {
     initialState: { pagination: { pageSize: 8 } },
   });
 
+  async function confirmDelete() {
+    if (!cfg || !target) return;
+    try {
+      await api.del(`${endpoint}/${target.id}`);
+      toast.success(`${cfg.singular} eliminado`);
+      refetch();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "No se pudo eliminar");
+    }
+    setTarget(null);
+  }
+
   if (!cfg) {
-    return (
-      <div className="py-20 text-center text-muted-foreground">
-        Recurso no encontrado.
-      </div>
-    );
+    return <div className="py-20 text-center text-muted-foreground">Recurso no encontrado.</div>;
   }
 
   return (
@@ -223,10 +229,7 @@ export function ResourceList({ resourceKey }: { resourceKey: string }) {
         description={cfg.description}
         actions={
           <>
-            <Button
-              variant="outline"
-              onClick={() => toast.info("Exportación disponible en la versión final.")}
-            >
+            <Button variant="outline" onClick={() => toast.info("Exportación disponible en la versión final.")}>
               <Download className="h-4 w-4" />
               <span className="hidden sm:inline">Exportar</span>
             </Button>
@@ -241,7 +244,6 @@ export function ResourceList({ resourceKey }: { resourceKey: string }) {
       />
 
       <div className="rounded-2xl border bg-card">
-        {/* Barra de búsqueda */}
         <div className="flex items-center gap-3 border-b p-3">
           <div className="relative w-full max-w-xs">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -257,7 +259,16 @@ export function ResourceList({ resourceKey }: { resourceKey: string }) {
           </span>
         </div>
 
-        {!hydrated ? (
+        {error ? (
+          <div className="flex flex-col items-center gap-2 py-16 text-center text-sm text-muted-foreground">
+            <TriangleAlert className="h-6 w-6 text-destructive" />
+            No se pudo cargar la información.
+            <span className="text-xs">{error}</span>
+            <Button variant="outline" size="sm" onClick={refetch} className="mt-1">
+              Reintentar
+            </Button>
+          </div>
+        ) : loading ? (
           <div className="space-y-2 p-4">
             {Array.from({ length: 6 }).map((_, i) => (
               <Skeleton key={i} className="h-12 w-full rounded-lg" />
@@ -269,13 +280,9 @@ export function ResourceList({ resourceKey }: { resourceKey: string }) {
               {table.getHeaderGroups().map((hg) => (
                 <TableRow key={hg.id} className="hover:bg-transparent">
                   {hg.headers.map((header) => {
-                    const hide = (header.column.columnDef.meta as { hideOnMobile?: boolean })
-                      ?.hideOnMobile;
+                    const hide = (header.column.columnDef.meta as { hideOnMobile?: boolean })?.hideOnMobile;
                     return (
-                      <TableHead
-                        key={header.id}
-                        className={cn("text-xs", hide && "hidden md:table-cell")}
-                      >
+                      <TableHead key={header.id} className={cn("text-xs", hide && "hidden md:table-cell")}>
                         {flexRender(header.column.columnDef.header, header.getContext())}
                       </TableHead>
                     );
@@ -298,13 +305,9 @@ export function ResourceList({ resourceKey }: { resourceKey: string }) {
                     onClick={() => router.push(`${cfg.path}/${row.original.id}`)}
                   >
                     {row.getVisibleCells().map((cell) => {
-                      const hide = (cell.column.columnDef.meta as { hideOnMobile?: boolean })
-                        ?.hideOnMobile;
+                      const hide = (cell.column.columnDef.meta as { hideOnMobile?: boolean })?.hideOnMobile;
                       return (
-                        <TableCell
-                          key={cell.id}
-                          className={cn(hide && "hidden md:table-cell")}
-                        >
+                        <TableCell key={cell.id} className={cn(hide && "hidden md:table-cell")}>
                           {flexRender(cell.column.columnDef.cell, cell.getContext())}
                         </TableCell>
                       );
@@ -316,28 +319,17 @@ export function ResourceList({ resourceKey }: { resourceKey: string }) {
           </Table>
         )}
 
-        {/* Paginación */}
-        {hydrated && table.getPageCount() > 1 && (
+        {!loading && !error && table.getPageCount() > 1 && (
           <div className="flex items-center justify-between border-t p-3 text-sm">
             <span className="text-muted-foreground">
               Página {table.getState().pagination.pageIndex + 1} de {table.getPageCount()}
             </span>
             <div className="flex gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => table.previousPage()}
-                disabled={!table.getCanPreviousPage()}
-              >
+              <Button variant="outline" size="sm" onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()}>
                 <ChevronLeft className="h-4 w-4" />
                 Anterior
               </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => table.nextPage()}
-                disabled={!table.getCanNextPage()}
-              >
+              <Button variant="outline" size="sm" onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>
                 Siguiente
                 <ChevronRight className="h-4 w-4" />
               </Button>
@@ -346,7 +338,6 @@ export function ResourceList({ resourceKey }: { resourceKey: string }) {
         )}
       </div>
 
-      {/* Confirmación de eliminación */}
       <AlertDialog open={!!target} onOpenChange={(o) => !o && setTarget(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -363,13 +354,7 @@ export function ResourceList({ resourceKey }: { resourceKey: string }) {
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction
               className="bg-destructive text-white hover:bg-destructive/90"
-              onClick={() => {
-                if (target) {
-                  remove(cfg.key, target.id);
-                  toast.success(`${cfg.singular} eliminado`);
-                }
-                setTarget(null);
-              }}
+              onClick={confirmDelete}
             >
               Eliminar
             </AlertDialogAction>

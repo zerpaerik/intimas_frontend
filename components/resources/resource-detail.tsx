@@ -23,9 +23,15 @@ import {
 } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
 import { formatPEN, formatDate, calcAge, initials } from "@/lib/format";
-import { getResource } from "@/lib/resources";
+import { getResource, endpointFor } from "@/lib/resources";
 import type { FieldDef, ResourceConfig, Row } from "@/lib/resources/types";
-import { useData, useRow } from "@/lib/data/resource-store";
+import { api } from "@/lib/api/client";
+import { useApiItem } from "@/lib/api/hooks";
+
+function relName(value: unknown, fallback?: unknown) {
+  if (value && typeof value === "object") return (value as { nombre?: string }).nombre ?? "";
+  return value ?? fallback ?? "";
+}
 
 function FieldValue({
   field,
@@ -36,21 +42,30 @@ function FieldValue({
   row: Row;
   colorMap?: Record<string, string>;
 }) {
-  const value = row[field.name];
-
   if (field.type === "multiselect") {
-    const arr = Array.isArray(value) ? (value as string[]) : [];
+    const arr = Array.isArray(row[field.name]) ? (row[field.name] as unknown[]) : [];
     if (!arr.length) return <span className="text-muted-foreground">—</span>;
     return (
       <div className="flex flex-wrap gap-1.5">
-        {arr.map((t) => (
-          <span key={t} className="rounded-md bg-brand/10 px-2 py-0.5 text-xs font-medium text-brand">
-            {t}
-          </span>
-        ))}
+        {arr.map((t, i) => {
+          const label = typeof t === "object" && t ? (t as { nombre?: string }).nombre : String(t);
+          return (
+            <span key={i} className="rounded-md bg-brand/10 px-2 py-0.5 text-xs font-medium text-brand">
+              {label}
+            </span>
+          );
+        })}
       </div>
     );
   }
+
+  // Llave foránea (select con optionsFrom): muestra el nombre de la relación
+  if (field.optionsFrom && field.type === "select") {
+    const display = relName(row[field.name.replace(/Id$/, "")], row[field.name]);
+    return display ? <span>{String(display)}</span> : <span className="text-muted-foreground">—</span>;
+  }
+
+  const value = row[field.name];
   if (value == null || value === "") return <span className="text-muted-foreground">—</span>;
   if (field.type === "currency") return <span className="font-medium tabular-nums">{formatPEN(Number(value))}</span>;
   if (field.type === "percent") return <span className="tabular-nums">{Number(value)}%</span>;
@@ -99,9 +114,7 @@ function DetailInner({ cfg, row }: { cfg: ResourceConfig; row: Row }) {
         <dl className="grid grid-cols-1 gap-x-10 gap-y-5 sm:grid-cols-2">
           {cfg.fields.map((f) => (
             <div key={f.name} className={cn(f.span === 2 && "sm:col-span-2")}>
-              <dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                {f.label}
-              </dt>
+              <dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{f.label}</dt>
               <dd className="mt-1 text-sm">
                 <FieldValue field={f} row={row} colorMap={colorByKey[f.name]} />
               </dd>
@@ -116,9 +129,13 @@ function DetailInner({ cfg, row }: { cfg: ResourceConfig; row: Row }) {
 export function ResourceDetail({ resourceKey, id }: { resourceKey: string; id: number }) {
   const router = useRouter();
   const cfg = getResource(resourceKey);
-  const hydrated = useData((s) => s.hydrated);
-  const remove = useData((s) => s.remove);
-  const row = useRow(resourceKey, id);
+  const endpoint = cfg ? `/${endpointFor(cfg.key)}` : null;
+  const { data: raw, loading } = useApiItem<Row>(endpoint && id ? `${endpoint}/${id}` : null);
+
+  const row = React.useMemo(
+    () => (raw && cfg?.derive ? { ...raw, ...cfg.derive(raw) } : raw),
+    [raw, cfg],
+  );
 
   if (!cfg) {
     return <div className="py-20 text-center text-muted-foreground">Recurso no encontrado.</div>;
@@ -160,18 +177,20 @@ export function ResourceDetail({ resourceKey, id }: { resourceKey: string; id: n
                   <AlertDialogContent>
                     <AlertDialogHeader>
                       <AlertDialogTitle>¿Eliminar registro?</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        Esta acción no se puede deshacer.
-                      </AlertDialogDescription>
+                      <AlertDialogDescription>Esta acción no se puede deshacer.</AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                       <AlertDialogCancel>Cancelar</AlertDialogCancel>
                       <AlertDialogAction
                         className="bg-destructive text-white hover:bg-destructive/90"
-                        onClick={() => {
-                          remove(cfg.key, id);
-                          toast.success(`${cfg.singular} eliminado`);
-                          router.push(cfg.path);
+                        onClick={async () => {
+                          try {
+                            await api.del(`${endpoint}/${id}`);
+                            toast.success(`${cfg.singular} eliminado`);
+                            router.push(cfg.path);
+                          } catch (e) {
+                            toast.error(e instanceof Error ? e.message : "No se pudo eliminar");
+                          }
                         }}
                       >
                         Eliminar
@@ -187,9 +206,9 @@ export function ResourceDetail({ resourceKey, id }: { resourceKey: string; id: n
     </>
   );
 
-  if (!hydrated) {
+  if (loading) {
     return (
-      <div>
+      <div className="mx-auto max-w-3xl">
         {header}
         <Skeleton className="h-80 w-full rounded-2xl" />
       </div>
@@ -197,7 +216,7 @@ export function ResourceDetail({ resourceKey, id }: { resourceKey: string; id: n
   }
   if (!row) {
     return (
-      <div>
+      <div className="mx-auto max-w-3xl">
         {header}
         <div className="rounded-2xl border border-dashed py-20 text-center text-muted-foreground">
           No se encontró el registro solicitado.

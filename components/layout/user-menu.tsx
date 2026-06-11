@@ -86,10 +86,14 @@ export function UserMenu() {
           <DropdownMenuSubContent className="w-60">
             <DropdownMenuRadioGroup
               value={String(session.roleId)}
-              onValueChange={(v) => {
+              onValueChange={async (v) => {
                 const id = Number(v) as RoleId;
-                switchRole(id);
-                toast.success(`Ahora ves el sistema como ${getRole(id).name}`);
+                try {
+                  await switchRole(id);
+                  toast.success(`Ahora ves el sistema como ${getRole(id).name}`);
+                } catch (e) {
+                  toast.error(e instanceof Error ? e.message : "No se pudo cambiar de rol");
+                }
               }}
             >
               {ROLES.map((r) => (

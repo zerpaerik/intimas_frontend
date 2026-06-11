@@ -14,7 +14,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { calcAge, initials } from "@/lib/format";
-import { useData, useRows } from "@/lib/data/resource-store";
+import { api } from "@/lib/api/client";
+import { useApiList } from "@/lib/api/hooks";
 import type { Row } from "@/lib/resources/types";
 
 export function PatientSearch({
@@ -24,11 +25,11 @@ export function PatientSearch({
   value: Row | null;
   onSelect: (p: Row | null) => void;
 }) {
-  const pacientes = useRows("pacientes");
-  const create = useData((s) => s.create);
+  const { data: pacientes, refetch } = useApiList<Row>("/pacientes");
 
   const [query, setQuery] = React.useState("");
   const [creating, setCreating] = React.useState(false);
+  const [saving, setSaving] = React.useState(false);
   const [form, setForm] = React.useState({
     nombres: "",
     apellidos: "",
@@ -57,31 +58,33 @@ export function PatientSearch({
     setCreating(true);
   }
 
-  function submitCreate() {
+  async function submitCreate() {
     if (!form.nombres.trim() || !form.apellidos.trim() || !form.numDoc.trim()) {
       toast.error("Completa nombres, apellidos y documento.");
       return;
     }
-    const nuevo = create("pacientes", {
-      nombres: form.nombres.toUpperCase(),
-      apellidos: form.apellidos.toUpperCase(),
-      tipoDoc: form.tipoDoc,
-      numDoc: form.numDoc,
-      sexo: form.sexo,
-      telefono: form.telefono,
-      email: "",
-      ocupacion: "",
-      estadoCivil: "",
-      direccion: "",
-      fechaNacimiento: "",
-    });
-    toast.success("Paciente creado · registro retomado");
-    setCreating(false);
-    setQuery("");
-    onSelect(nuevo);
+    setSaving(true);
+    try {
+      const nuevo = await api.post<Row>("/pacientes", {
+        nombres: form.nombres.toUpperCase(),
+        apellidos: form.apellidos.toUpperCase(),
+        tipoDoc: form.tipoDoc,
+        numDoc: form.numDoc,
+        sexo: form.sexo,
+        telefono: form.telefono,
+      });
+      toast.success("Paciente creado · registro retomado");
+      refetch();
+      setCreating(false);
+      setQuery("");
+      onSelect(nuevo);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "No se pudo crear el paciente");
+    } finally {
+      setSaving(false);
+    }
   }
 
-  // Paciente seleccionado
   if (value) {
     const nombre = `${value.nombres ?? ""} ${value.apellidos ?? ""}`.trim();
     const edad = value.fechaNacimiento ? calcAge(String(value.fechaNacimiento)) : null;
@@ -105,7 +108,6 @@ export function PatientSearch({
     );
   }
 
-  // Formulario de alta rápida
   if (creating) {
     return (
       <div className="rounded-xl border p-4">
@@ -157,15 +159,14 @@ export function PatientSearch({
             <Input id="qc-tel" value={form.telefono} onChange={(e) => setForm({ ...form, telefono: e.target.value })} />
           </div>
         </div>
-        <Button className="mt-4 w-full bg-brand-gradient text-white" onClick={submitCreate}>
+        <Button className="mt-4 w-full bg-brand-gradient text-white" onClick={submitCreate} disabled={saving}>
           <Check className="h-4 w-4" />
-          Crear y continuar
+          {saving ? "Creando…" : "Crear y continuar"}
         </Button>
       </div>
     );
   }
 
-  // Búsqueda
   return (
     <div>
       <div className="relative">

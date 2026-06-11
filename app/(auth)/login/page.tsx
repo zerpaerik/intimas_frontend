@@ -1,19 +1,13 @@
 "use client";
 
 import * as React from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
-import {
-  ArrowRight,
-  Building2,
-  Eye,
-  EyeOff,
-  Lock,
-  Mail,
-} from "lucide-react";
+import { ArrowRight, Building2, Eye, EyeOff, Loader2, Lock, Mail } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,17 +20,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import Image from "next/image";
 import { LoginArtwork } from "@/components/brand/login-artwork";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useAuth } from "@/lib/auth/store";
-import {
-  ROLES,
-  SEDES,
-  demoUserByEmail,
-  getRole,
-  type RoleId,
-} from "@/lib/auth/roles";
+import { ROLES, SEDES, getRole, type RoleId } from "@/lib/auth/roles";
 
 const schema = z.object({
   email: z.string().min(1, "Ingresa tu correo").email("Correo no válido"),
@@ -46,22 +33,14 @@ const schema = z.object({
 });
 type Values = z.infer<typeof schema>;
 
-function nameFromEmail(email: string): string {
-  const raw = email.split("@")[0].replace(/[._-]+/g, " ");
-  return raw
-    .split(" ")
-    .filter(Boolean)
-    .map((p) => p[0].toUpperCase() + p.slice(1))
-    .join(" ");
-}
-
 export default function LoginPage() {
   const router = useRouter();
   const session = useAuth((s) => s.session);
   const hydrated = useAuth((s) => s.hydrated);
-  const login = useAuth((s) => s.login);
+  const loginWithCredentials = useAuth((s) => s.loginWithCredentials);
   const loginAsRole = useAuth((s) => s.loginAsRole);
   const [showPw, setShowPw] = React.useState(false);
+  const [busyRole, setBusyRole] = React.useState<RoleId | null>(null);
 
   React.useEffect(() => {
     if (hydrated && session) router.replace("/dashboard");
@@ -75,30 +54,35 @@ export default function LoginPage() {
     formState: { errors, isSubmitting },
   } = useForm<Values>({
     resolver: zodResolver(schema),
-    defaultValues: { email: "", password: "", sedeId: "1", remember: true },
+    defaultValues: {
+      email: "admin@intimas.pe",
+      password: "intimas123",
+      sedeId: "1",
+      remember: true,
+    },
   });
 
-  function onSubmit(v: Values) {
-    const sedeId = Number(v.sedeId);
-    const existing = demoUserByEmail(v.email);
-    const user =
-      existing ?? {
-        id: 99,
-        name: nameFromEmail(v.email) || "Usuario Demo",
-        email: v.email,
-        roleId: 1 as RoleId,
-        title: "Administrador General",
-      };
-    login(user, sedeId);
-    toast.success(`Bienvenido(a), ${user.name.split(" ")[0]}`);
-    router.replace("/dashboard");
+  async function onSubmit(v: Values) {
+    try {
+      await loginWithCredentials(v.email, v.password, Number(v.sedeId));
+      toast.success("Sesión iniciada");
+      router.replace("/dashboard");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "No se pudo iniciar sesión");
+    }
   }
 
-  function quick(roleId: RoleId) {
+  async function quick(roleId: RoleId) {
     const sedeId = Number(getValues("sedeId")) || 1;
-    loginAsRole(roleId, sedeId);
-    toast.success(`Sesión demo · ${getRole(roleId).name}`);
-    router.replace("/dashboard");
+    setBusyRole(roleId);
+    try {
+      await loginAsRole(roleId, sedeId);
+      toast.success(`Sesión · ${getRole(roleId).name}`);
+      router.replace("/dashboard");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "No se pudo iniciar sesión");
+      setBusyRole(null);
+    }
   }
 
   return (
@@ -133,7 +117,6 @@ export default function LoginPage() {
           </div>
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
-            {/* Email */}
             <div className="space-y-1.5">
               <Label htmlFor="email">Correo electrónico</Label>
               <div className="relative">
@@ -148,12 +131,9 @@ export default function LoginPage() {
                   {...register("email")}
                 />
               </div>
-              {errors.email && (
-                <p className="text-xs text-destructive">{errors.email.message}</p>
-              )}
+              {errors.email && <p className="text-xs text-destructive">{errors.email.message}</p>}
             </div>
 
-            {/* Password */}
             <div className="space-y-1.5">
               <Label htmlFor="password">Contraseña</Label>
               <div className="relative">
@@ -177,13 +157,10 @@ export default function LoginPage() {
                 </button>
               </div>
               {errors.password && (
-                <p className="text-xs text-destructive">
-                  {errors.password.message}
-                </p>
+                <p className="text-xs text-destructive">{errors.password.message}</p>
               )}
             </div>
 
-            {/* Sede */}
             <div className="space-y-1.5">
               <Label htmlFor="sede">Sede</Label>
               <Controller
@@ -209,17 +186,13 @@ export default function LoginPage() {
               />
             </div>
 
-            {/* Recordar / recuperar */}
             <div className="flex items-center justify-between pt-1">
               <Controller
                 control={control}
                 name="remember"
                 render={({ field }) => (
                   <label className="flex cursor-pointer items-center gap-2 text-sm text-muted-foreground">
-                    <Checkbox
-                      checked={field.value}
-                      onCheckedChange={(v) => field.onChange(!!v)}
-                    />
+                    <Checkbox checked={field.value} onCheckedChange={(v) => field.onChange(!!v)} />
                     Recordarme
                   </label>
                 )}
@@ -238,12 +211,17 @@ export default function LoginPage() {
               disabled={isSubmitting}
               className="group h-11 w-full bg-brand-gradient text-white shadow-lg shadow-brand/25 transition-all hover:shadow-xl hover:shadow-brand/30 hover:brightness-105"
             >
-              Iniciar sesión
-              <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+              {isSubmitting ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <>
+                  Iniciar sesión
+                  <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                </>
+              )}
             </Button>
           </form>
 
-          {/* Acceso rápido demo */}
           <div className="mt-8">
             <div className="relative mb-4 text-center">
               <span className="relative z-10 bg-background px-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">
@@ -257,14 +235,19 @@ export default function LoginPage() {
                 <button
                   key={role.id}
                   type="button"
+                  disabled={busyRole !== null}
                   onClick={() => quick(role.id)}
-                  className="group flex items-center gap-2.5 rounded-xl border bg-card p-2.5 text-left transition-all hover:border-brand/40 hover:bg-accent/50 hover:shadow-sm"
+                  className="group flex items-center gap-2.5 rounded-xl border bg-card p-2.5 text-left transition-all hover:border-brand/40 hover:bg-accent/50 hover:shadow-sm disabled:opacity-60"
                 >
                   <span
                     className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-xs font-bold text-white"
                     style={{ backgroundColor: role.color }}
                   >
-                    {role.short.slice(0, 2).toUpperCase()}
+                    {busyRole === role.id ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      role.short.slice(0, 2).toUpperCase()
+                    )}
                   </span>
                   <span className="min-w-0">
                     <span className="block truncate text-sm font-semibold leading-tight">
@@ -278,7 +261,7 @@ export default function LoginPage() {
               ))}
             </div>
             <p className="mt-4 text-center text-xs text-muted-foreground">
-              Mockup de demostración · cualquier correo y contraseña funcionan.
+              Usuarios demo · contraseña <span className="font-medium">intimas123</span>
             </p>
           </div>
         </div>
