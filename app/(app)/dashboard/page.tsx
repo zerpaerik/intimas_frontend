@@ -1,27 +1,38 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, CheckCircle2, TrendingUp } from "lucide-react";
+import {
+  Activity, ArrowRight, Banknote, CalendarClock, ClipboardPlus, CreditCard,
+  Landmark, Smartphone, Stethoscope, TrendingUp, UserRound, Wallet,
+} from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { KpiCard } from "@/components/dashboard/kpi-card";
-import {
-  AreaTrendChart,
-  DonutChart,
-  RankBarChart,
-} from "@/components/dashboard/charts";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { AreaTrendChart, DonutChart, RankBarChart } from "@/components/dashboard/charts";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/lib/auth/store";
 import { getRole } from "@/lib/auth/roles";
 import { formatPEN, formatDateLong } from "@/lib/format";
-import { dashboardFor } from "@/lib/data/dashboards";
+import { useApiItem } from "@/lib/api/hooks";
+
+interface Summary {
+  kpisHoy: { efectivo: number; tarjeta: number; deposito: number; yape: number; total: number; atenciones: number };
+  ingresosPorDia: { dia: string; ingresos: number }[];
+  atencionesPorDia: { dia: string; atenciones: number }[];
+  metodosPago: { name: string; value: number; color: string }[];
+  topServicios: { nombre: string; total: number }[];
+  atencionesPorEstado: { name: string; value: number; color: string }[];
+  actividadReciente: { titulo: string; detalle: string; hora: string; color: string }[];
+  counts: { pacientes: number; profesionales: number; servicios: number; analisis: number; paquetes: number; atenciones: number };
+}
+
+const QUICK = [
+  { label: "Nueva atención", href: "/movimientos/atenciones/nueva", icon: ClipboardPlus },
+  { label: "Ver pacientes", href: "/archivos/pacientes", icon: UserRound },
+  { label: "Atenciones", href: "/movimientos/atenciones", icon: CalendarClock },
+  { label: "Servicios", href: "/archivos/servicios", icon: Activity },
+];
 
 function greeting() {
   const h = new Date().getHours();
@@ -38,195 +49,170 @@ export default function DashboardPage() {
     : nameParts[0] ?? "";
   const roleId = session?.roleId ?? 1;
   const role = getRole(roleId);
-  const cfg = dashboardFor(roleId);
-  const Primary = cfg.primary.icon;
+  const isFinanzas = [1, 2, 12].includes(roleId);
 
-  const fmtLegend = (v: number) =>
-    cfg.donut.mode === "money" ? formatPEN(v) : new Intl.NumberFormat("es-PE").format(v);
+  const { data: s, loading } = useApiItem<Summary>("/dashboard");
+
+  const kpis = !s
+    ? []
+    : isFinanzas
+      ? [
+          { label: "Efectivo", value: formatPEN(s.kpisHoy.efectivo), icon: Banknote, accent: "#16a34a" },
+          { label: "Tarjeta", value: formatPEN(s.kpisHoy.tarjeta), icon: CreditCard, accent: "#0091d5" },
+          { label: "Depósito", value: formatPEN(s.kpisHoy.deposito), icon: Landmark, accent: "#7c3aed" },
+          { label: "Yape", value: formatPEN(s.kpisHoy.yape), icon: Smartphone, accent: "#e6007e" },
+          { label: "Total del día", value: formatPEN(s.kpisHoy.total), icon: Wallet, accent: "#00b8a9" },
+          { label: "Atenciones hoy", value: String(s.kpisHoy.atenciones), icon: ClipboardPlus, accent: "#f5a623" },
+        ]
+      : [
+          { label: "Atenciones hoy", value: String(s.kpisHoy.atenciones), icon: ClipboardPlus, accent: "#e6007e" },
+          { label: "Atenciones totales", value: String(s.counts.atenciones), icon: CalendarClock, accent: "#0091d5" },
+          { label: "Pacientes", value: String(s.counts.pacientes), icon: UserRound, accent: "#7c3aed" },
+          { label: "Profesionales", value: String(s.counts.profesionales), icon: Stethoscope, accent: "#00b8a9" },
+        ];
+
+  const fmtLegend = (v: number) => (isFinanzas ? formatPEN(v) : new Intl.NumberFormat("es-PE").format(v));
+  const donutData = isFinanzas ? s?.metodosPago ?? [] : s?.atencionesPorEstado ?? [];
 
   return (
     <div className="space-y-6">
       <PageHeader
-        title={
-          <span>
-            {greeting()}, {first} 👋
-          </span>
-        }
+        title={<span>{greeting()}, {first} 👋</span>}
         description={<span className="capitalize">{formatDateLong(new Date())}</span>}
         actions={
           <>
-            <span
-              className="hidden items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold text-white sm:inline-flex"
-              style={{ backgroundColor: role.color }}
-            >
+            <span className="hidden items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold text-white sm:inline-flex" style={{ backgroundColor: role.color }}>
               {role.name}
             </span>
             <Button asChild className="bg-brand-gradient text-white">
-              <Link href={cfg.primary.href}>
-                <Primary className="h-4 w-4" />
-                {cfg.primary.label}
-              </Link>
+              <Link href="/movimientos/atenciones/nueva"><ClipboardPlus className="h-4 w-4" />Nueva atención</Link>
             </Button>
           </>
         }
       />
 
-      {/* KPIs */}
-      <div
-        className={cn(
-          "grid grid-cols-2 gap-4",
-          cfg.kpis.length === 6 ? "lg:grid-cols-3 xl:grid-cols-6" : "lg:grid-cols-4",
-        )}
-      >
-        {cfg.kpis.map((k) => (
-          <KpiCard
-            key={k.label}
-            label={k.label}
-            value={k.value}
-            delta={k.delta}
-            icon={k.icon}
-            accent={k.accent}
-            hint={k.hint}
-          />
-        ))}
-      </div>
-
-      {/* Tendencia + dona */}
-      <div className="grid gap-4 lg:grid-cols-3">
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <div>
-                <CardTitle>{cfg.area.title}</CardTitle>
-                <CardDescription>{cfg.area.subtitle}</CardDescription>
-              </div>
-              <div className="flex items-center gap-4 text-xs">
-                {cfg.area.series.map((s) => (
-                  <span key={s.key} className="flex items-center gap-1.5">
-                    <span className="h-2.5 w-2.5 rounded-full" style={{ background: s.color }} />
-                    {s.name}
-                  </span>
-                ))}
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <AreaTrendChart
-              data={cfg.area.data}
-              xKey={cfg.area.xKey}
-              series={cfg.area.series}
-              mode={cfg.area.mode}
-            />
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>{cfg.donut.title}</CardTitle>
-            <CardDescription>{cfg.donut.subtitle}</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <DonutChart data={cfg.donut.data} mode={cfg.donut.mode} />
-            <ul className="mt-4 space-y-2">
-              {cfg.donut.data.map((p) => (
-                <li key={p.name} className="flex items-center gap-2 text-sm">
-                  <span className="h-2.5 w-2.5 rounded-full" style={{ background: p.color }} />
-                  <span className="text-muted-foreground">{p.name}</span>
-                  <span className="ml-auto font-semibold">{fmtLegend(p.value)}</span>
-                </li>
-              ))}
-            </ul>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Ranking + pendientes */}
-      <div className="grid gap-4 lg:grid-cols-3">
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle>{cfg.bar.title}</CardTitle>
-            <CardDescription>{cfg.bar.subtitle}</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <RankBarChart
-              data={cfg.bar.data}
-              labelKey={cfg.bar.labelKey}
-              valueKey={cfg.bar.valueKey}
-              unit={cfg.bar.unit}
-            />
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>{cfg.pendientes.titulo}</CardTitle>
-            <CardDescription>Resumen según tu rol</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {cfg.pendientes.items.map((item) => (
-              <div key={item} className="flex items-start gap-2.5 text-sm">
-                <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-brand" />
-                <span>{item}</span>
-              </div>
+      {loading || !s ? (
+        <>
+          <div className="grid grid-cols-2 gap-4 lg:grid-cols-3 xl:grid-cols-6">
+            {Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-28 rounded-2xl" />)}
+          </div>
+          <div className="grid gap-4 lg:grid-cols-3">
+            <Skeleton className="h-80 rounded-2xl lg:col-span-2" />
+            <Skeleton className="h-80 rounded-2xl" />
+          </div>
+        </>
+      ) : (
+        <>
+          <div className={isFinanzas ? "grid grid-cols-2 gap-4 lg:grid-cols-3 xl:grid-cols-6" : "grid grid-cols-2 gap-4 lg:grid-cols-4"}>
+            {kpis.map((k) => (
+              <KpiCard key={k.label} label={k.label} value={k.value} icon={k.icon} accent={k.accent} />
             ))}
-          </CardContent>
-        </Card>
-      </div>
+          </div>
 
-      {/* Actividad + accesos */}
-      <div className="grid gap-4 lg:grid-cols-3">
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle>{cfg.activity.title}</CardTitle>
-            <CardDescription>Movimientos de hoy</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ol className="relative space-y-4 border-l border-border pl-5">
-              {cfg.activity.items.map((a) => (
-                <li key={a.titulo + a.hora} className="relative">
-                  <span
-                    className="absolute -left-[1.45rem] top-1 h-2.5 w-2.5 rounded-full ring-4 ring-background"
-                    style={{ background: a.color }}
-                  />
-                  <div className="flex items-center justify-between gap-2">
-                    <p className="text-sm font-semibold">{a.titulo}</p>
-                    <span className="shrink-0 text-xs text-muted-foreground">{a.hora}</span>
-                  </div>
-                  <p className="text-sm text-muted-foreground">{a.detalle}</p>
-                </li>
-              ))}
-            </ol>
-          </CardContent>
-        </Card>
+          {/* Tendencia + dona */}
+          <div className="grid gap-4 lg:grid-cols-3">
+            <Card className="lg:col-span-2">
+              <CardHeader>
+                <CardTitle>{isFinanzas ? "Ingresos por día" : "Atenciones por día"}</CardTitle>
+                <CardDescription>Últimos 14 días</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {isFinanzas ? (
+                  <AreaTrendChart data={s.ingresosPorDia} xKey="dia" mode="money" series={[{ key: "ingresos", name: "Ingresos", color: "#e6007e" }]} />
+                ) : (
+                  <AreaTrendChart data={s.atencionesPorDia} xKey="dia" mode="count" series={[{ key: "atenciones", name: "Atenciones", color: "#7c3aed" }]} />
+                )}
+              </CardContent>
+            </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
+            <Card>
+              <CardHeader>
+                <CardTitle>{isFinanzas ? "Métodos de pago" : "Atenciones por estado"}</CardTitle>
+                <CardDescription>{isFinanzas ? "Distribución" : "Acumulado"}</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {donutData.length === 0 ? (
+                  <p className="py-12 text-center text-sm text-muted-foreground">Sin datos aún.</p>
+                ) : (
+                  <>
+                    <DonutChart data={donutData} mode={isFinanzas ? "money" : "count"} />
+                    <ul className="mt-4 space-y-2">
+                      {donutData.map((p) => (
+                        <li key={p.name} className="flex items-center gap-2 text-sm">
+                          <span className="h-2.5 w-2.5 rounded-full" style={{ background: p.color }} />
+                          <span className="text-muted-foreground">{p.name}</span>
+                          <span className="ml-auto font-semibold">{fmtLegend(p.value)}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Top servicios + actividad */}
+          <div className="grid gap-4 lg:grid-cols-3">
+            <Card className="lg:col-span-2">
+              <CardHeader>
+                <CardTitle>Servicios más solicitados</CardTitle>
+                <CardDescription>Por número de atenciones</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {s.topServicios.length === 0 ? (
+                  <p className="py-12 text-center text-sm text-muted-foreground">Aún no hay servicios registrados en atenciones.</p>
+                ) : (
+                  <RankBarChart data={s.topServicios} labelKey="nombre" valueKey="total" unit="atenciones" />
+                )}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Actividad reciente</CardTitle>
+                <CardDescription>Últimas atenciones</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {s.actividadReciente.length === 0 ? (
+                  <p className="py-8 text-center text-sm text-muted-foreground">Sin actividad reciente.</p>
+                ) : (
+                  <ol className="relative space-y-4 border-l border-border pl-5">
+                    {s.actividadReciente.map((a, i) => (
+                      <li key={i} className="relative">
+                        <span className="absolute -left-[1.45rem] top-1 h-2.5 w-2.5 rounded-full ring-4 ring-background" style={{ background: a.color }} />
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="text-sm font-semibold">{a.titulo}</p>
+                          <span className="shrink-0 text-xs text-muted-foreground">{a.hora}</span>
+                        </div>
+                        <p className="text-sm text-muted-foreground">{a.detalle}</p>
+                      </li>
+                    ))}
+                  </ol>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Accesos rápidos */}
+          <div>
+            <h2 className="mb-3 flex items-center gap-2 font-heading text-lg font-bold">
               <TrendingUp className="h-4 w-4 text-brand" />
               Accesos rápidos
-            </CardTitle>
-            <CardDescription>Lo más usado</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-2.5">
-            {cfg.quick.map((q) => {
-              const Icon = q.icon;
-              return (
-                <Link
-                  key={q.label}
-                  href={q.href}
-                  className="group flex items-center gap-3 rounded-xl border bg-card p-3 transition-all hover:border-brand/40 hover:bg-accent/40"
-                >
-                  <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-gradient-soft text-brand">
-                    <Icon className="size-[18px]" />
+            </h2>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+              {QUICK.map((q) => (
+                <Link key={q.label} href={q.href} className="group flex items-center gap-3 rounded-xl border bg-card p-4 transition-all hover:-translate-y-0.5 hover:border-brand/40 hover:shadow-md">
+                  <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-gradient-soft text-brand">
+                    <q.icon className="h-5 w-5" />
                   </span>
                   <span className="text-sm font-semibold">{q.label}</span>
                   <ArrowRight className="ml-auto h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
                 </Link>
-              );
-            })}
-          </CardContent>
-        </Card>
-      </div>
+              ))}
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }

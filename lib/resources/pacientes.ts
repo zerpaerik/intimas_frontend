@@ -63,6 +63,16 @@ export const pacientes: ResourceConfig = {
       options: ["Soltero(a)", "Casado(a)", "Conviviente", "Divorciado(a)", "Viudo(a)"].map((v) => ({ value: v, label: v })),
     },
     { name: "direccion", label: "Dirección", type: "uppercase", span: 2 },
+    {
+      name: "grupoSanguineo",
+      label: "Grupo sanguíneo",
+      type: "select",
+      span: 1,
+      options: ["O+", "O-", "A+", "A-", "B+", "B-", "AB+", "AB-"].map((v) => ({ value: v, label: v })),
+    },
+    { name: "alergias", label: "Alergias", type: "text", span: 1 },
+    { name: "antPatologicos", label: "Antecedentes patológicos", type: "textarea", span: 2 },
+    { name: "antFamiliares", label: "Antecedentes familiares", type: "textarea", span: 2 },
   ],
   seed: [
     { id: 1, nombres: "María Elena", apellidos: "Flores Quispe", tipoDoc: "DNI", numDoc: "70215488", fechaNacimiento: "1992-04-18", sexo: "Femenino", telefono: "987654321", email: "maria.flores@gmail.com", ocupacion: "Docente", estadoCivil: "Casado(a)", direccion: "Av. Los Próceres 234, San Juan" },

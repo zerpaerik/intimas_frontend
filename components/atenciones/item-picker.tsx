@@ -9,7 +9,8 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import { formatPEN } from "@/lib/format";
-import { useRows } from "@/lib/data/resource-store";
+import { useApiList } from "@/lib/api/hooks";
+import type { Row } from "@/lib/resources/types";
 
 export interface CatalogItem {
   kind: string;
@@ -32,9 +33,17 @@ const METODOS: CatalogItem[] = [
   { kind: "Método", nombre: "Píldoras (ciclo)", precio: 18 },
 ];
 
-function Item({ item, onAdd }: { item: CatalogItem; onAdd: (i: CatalogItem) => void }) {
+function Item({
+  item,
+  uid,
+  onAdd,
+}: {
+  item: CatalogItem;
+  uid: string;
+  onAdd: (i: CatalogItem) => void;
+}) {
   return (
-    <CommandItem value={`${item.kind} ${item.nombre}`} onSelect={() => onAdd(item)}>
+    <CommandItem value={`${item.nombre} ${item.kind} ${uid}`} onSelect={() => onAdd(item)}>
       <span className="flex-1">{item.nombre}</span>
       <span className="text-xs font-medium tabular-nums text-muted-foreground">
         {formatPEN(item.precio)}
@@ -52,9 +61,9 @@ export function ItemPicker({
   onOpenChange: (o: boolean) => void;
   onAdd: (item: CatalogItem) => void;
 }) {
-  const servicios = useRows("servicios");
-  const analisis = useRows("analisis");
-  const paquetes = useRows("paquetes");
+  const servicios = useApiList<Row>("/servicios");
+  const analisis = useApiList<Row>("/analisis");
+  const paquetes = useApiList<Row>("/paquetes");
 
   const add = (i: CatalogItem) => {
     onAdd(i);
@@ -69,43 +78,46 @@ export function ItemPicker({
       description="Busca un servicio, análisis, paquete, consulta o método"
     >
       <CommandInput placeholder="Buscar en el catálogo…" />
-      <CommandList>
+      <CommandList className="max-h-[60vh]">
         <CommandEmpty>Sin resultados.</CommandEmpty>
         <CommandGroup heading="Servicios">
-          {servicios.map((s) => (
+          {servicios.data.map((s) => (
             <Item
               key={`s${s.id}`}
+              uid={`s${s.id}`}
               item={{ kind: String(s.tipo ?? "Servicio"), nombre: String(s.nombre), precio: Number(s.precio) }}
               onAdd={add}
             />
           ))}
         </CommandGroup>
         <CommandGroup heading="Análisis / Laboratorio">
-          {analisis.map((a) => (
+          {analisis.data.map((a) => (
             <Item
               key={`a${a.id}`}
+              uid={`a${a.id}`}
               item={{ kind: "Laboratorio", nombre: String(a.nombre), precio: Number(a.precio) }}
               onAdd={add}
             />
           ))}
         </CommandGroup>
         <CommandGroup heading="Paquetes">
-          {paquetes.map((p) => (
+          {paquetes.data.map((p) => (
             <Item
               key={`p${p.id}`}
+              uid={`p${p.id}`}
               item={{ kind: "Paquete", nombre: String(p.nombre), precio: Number(p.precio) }}
               onAdd={add}
             />
           ))}
         </CommandGroup>
         <CommandGroup heading="Consultas / Controles">
-          {CONSULTAS.map((c) => (
-            <Item key={c.nombre} item={c} onAdd={add} />
+          {CONSULTAS.map((c, i) => (
+            <Item key={c.nombre} uid={`c${i}`} item={c} onAdd={add} />
           ))}
         </CommandGroup>
         <CommandGroup heading="Métodos anticonceptivos">
-          {METODOS.map((m) => (
-            <Item key={m.nombre} item={m} onAdd={add} />
+          {METODOS.map((m, i) => (
+            <Item key={m.nombre} uid={`m${i}`} item={m} onAdd={add} />
           ))}
         </CommandGroup>
       </CommandList>
