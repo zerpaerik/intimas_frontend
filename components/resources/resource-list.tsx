@@ -221,7 +221,7 @@ export function ResourceList({ resourceKey }: { resourceKey: string }) {
   return (
     <div>
       <p className="mb-2 text-sm text-muted-foreground">
-        Archivo <span className="px-1">›</span>
+        {cfg.section ?? "Archivo"} <span className="px-1">›</span>
         <span className="text-foreground">{cfg.plural}</span>
       </p>
       <PageHeader

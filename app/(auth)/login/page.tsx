@@ -23,7 +23,7 @@ import {
 import { LoginArtwork } from "@/components/brand/login-artwork";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useAuth } from "@/lib/auth/store";
-import { ROLES, SEDES, getRole, type RoleId } from "@/lib/auth/roles";
+import { SEDES } from "@/lib/auth/roles";
 
 const schema = z.object({
   email: z.string().min(1, "Ingresa tu correo").email("Correo no válido"),
@@ -38,9 +38,7 @@ export default function LoginPage() {
   const session = useAuth((s) => s.session);
   const hydrated = useAuth((s) => s.hydrated);
   const loginWithCredentials = useAuth((s) => s.loginWithCredentials);
-  const loginAsRole = useAuth((s) => s.loginAsRole);
   const [showPw, setShowPw] = React.useState(false);
-  const [busyRole, setBusyRole] = React.useState<RoleId | null>(null);
 
   React.useEffect(() => {
     if (hydrated && session) router.replace("/dashboard");
@@ -50,16 +48,10 @@ export default function LoginPage() {
     register,
     handleSubmit,
     control,
-    getValues,
     formState: { errors, isSubmitting },
   } = useForm<Values>({
     resolver: zodResolver(schema),
-    defaultValues: {
-      email: "admin@intimas.pe",
-      password: "intimas123",
-      sedeId: "1",
-      remember: true,
-    },
+    defaultValues: { email: "", password: "", sedeId: "1", remember: true },
   });
 
   async function onSubmit(v: Values) {
@@ -69,19 +61,6 @@ export default function LoginPage() {
       router.replace("/dashboard");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "No se pudo iniciar sesión");
-    }
-  }
-
-  async function quick(roleId: RoleId) {
-    const sedeId = Number(getValues("sedeId")) || 1;
-    setBusyRole(roleId);
-    try {
-      await loginAsRole(roleId, sedeId);
-      toast.success(`Sesión · ${getRole(roleId).name}`);
-      router.replace("/dashboard");
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "No se pudo iniciar sesión");
-      setBusyRole(null);
     }
   }
 
@@ -95,7 +74,6 @@ export default function LoginPage() {
         </div>
 
         <div className="w-full max-w-md">
-          {/* Logo real de Intimas */}
           <div className="mb-8 flex justify-center">
             <Image
               src="/brand/intimas-logo.png"
@@ -221,49 +199,6 @@ export default function LoginPage() {
               )}
             </Button>
           </form>
-
-          <div className="mt-8">
-            <div className="relative mb-4 text-center">
-              <span className="relative z-10 bg-background px-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                Acceso rápido (demo)
-              </span>
-              <span className="absolute left-0 top-1/2 h-px w-full -translate-y-1/2 bg-border" />
-            </div>
-
-            <div className="grid grid-cols-2 gap-2.5">
-              {ROLES.map((role) => (
-                <button
-                  key={role.id}
-                  type="button"
-                  disabled={busyRole !== null}
-                  onClick={() => quick(role.id)}
-                  className="group flex items-center gap-2.5 rounded-xl border bg-card p-2.5 text-left transition-all hover:border-brand/40 hover:bg-accent/50 hover:shadow-sm disabled:opacity-60"
-                >
-                  <span
-                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-xs font-bold text-white"
-                    style={{ backgroundColor: role.color }}
-                  >
-                    {busyRole === role.id ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      role.short.slice(0, 2).toUpperCase()
-                    )}
-                  </span>
-                  <span className="min-w-0">
-                    <span className="block truncate text-sm font-semibold leading-tight">
-                      {role.short}
-                    </span>
-                    <span className="block truncate text-[11px] text-muted-foreground">
-                      {role.name}
-                    </span>
-                  </span>
-                </button>
-              ))}
-            </div>
-            <p className="mt-4 text-center text-xs text-muted-foreground">
-              Usuarios demo · contraseña <span className="font-medium">intimas123</span>
-            </p>
-          </div>
         </div>
       </div>
     </div>

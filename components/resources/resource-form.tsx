@@ -31,21 +31,22 @@ import { useApiItem, useApiList } from "@/lib/api/hooks";
 
 const NUMERIC = ["number", "currency", "percent"];
 
-function buildSchema(fields: FieldDef[]) {
+function buildSchema(fields: FieldDef[], mode: "create" | "edit") {
   const shape: Record<string, z.ZodTypeAny> = {};
   for (const f of fields) {
+    const required = f.required || (f.requiredOnCreate && mode === "create");
     if (f.type === "multiselect") {
       shape[f.name] = z.array(z.string());
     } else if (NUMERIC.includes(f.type)) {
-      shape[f.name] = f.required
+      shape[f.name] = required
         ? z.string().min(1, "Requerido").refine((v) => !isNaN(Number(v)), "Número inválido")
         : z.string().refine((v) => v === "" || !isNaN(Number(v)), "Número inválido");
     } else if (f.type === "email") {
-      shape[f.name] = f.required
+      shape[f.name] = required
         ? z.string().min(1, "Requerido").email("Correo inválido")
         : z.string().refine((v) => v === "" || z.string().email().safeParse(v).success, "Correo inválido");
     } else {
-      shape[f.name] = f.required ? z.string().min(1, "Requerido") : z.string();
+      shape[f.name] = required ? z.string().min(1, "Requerido") : z.string();
     }
   }
   return z.object(shape);
@@ -82,8 +83,12 @@ function FormInner({
 }) {
   const router = useRouter();
   const endpoint = `/${endpointFor(cfg.key)}`;
-  const schema = React.useMemo(() => buildSchema(cfg.fields), [cfg]);
-  const defaults = React.useMemo(() => buildDefaults(cfg.fields, existing), [cfg, existing]);
+  const fields = React.useMemo(
+    () => (mode === "edit" ? cfg.fields.filter((f) => !f.hideOnEdit) : cfg.fields),
+    [cfg, mode],
+  );
+  const schema = React.useMemo(() => buildSchema(fields, mode), [fields, mode]);
+  const defaults = React.useMemo(() => buildDefaults(fields, existing), [fields, existing]);
 
   const {
     control,
@@ -106,10 +111,10 @@ function FormInner({
 
   async function onSubmit(values: Record<string, unknown>) {
     const payload: Record<string, unknown> = { ...values };
-    for (const f of cfg.fields) {
+    for (const f of fields) {
       if (NUMERIC.includes(f.type)) {
         payload[f.name] = values[f.name] === "" ? 0 : Number(values[f.name]);
-      } else if (f.optionsFrom && f.type === "select") {
+      } else if (f.type === "select" && (f.optionsFrom || f.numeric)) {
         payload[f.name] = values[f.name] === "" ? null : Number(values[f.name]);
       } else if (f.optionsFrom && f.type === "multiselect") {
         payload[f.name] = ((values[f.name] as string[]) ?? []).map(Number);
@@ -135,7 +140,7 @@ function FormInner({
       <Card>
         <CardContent className="pt-6">
           <div className="grid grid-cols-1 gap-x-5 gap-y-4 sm:grid-cols-2">
-            {cfg.fields.map((f) => {
+            {fields.map((f) => {
               const err = errors[f.name]?.message as string | undefined;
               return (
                 <div key={f.name} className={cn("space-y-1.5", f.span === 2 && "sm:col-span-2")}>
@@ -189,7 +194,7 @@ function FormInner({
                           )}
                           <Input
                             id={f.name}
-                            type={isNum ? "number" : f.type === "date" ? "date" : f.type === "email" ? "email" : f.type === "tel" ? "tel" : "text"}
+                            type={isNum ? "number" : f.type === "date" ? "date" : f.type === "email" ? "email" : f.type === "tel" ? "tel" : f.type === "password" ? "password" : "text"}
                             inputMode={isNum ? "decimal" : undefined}
                             step={isCurrency ? "0.01" : undefined}
                             placeholder={f.placeholder}
@@ -265,7 +270,7 @@ export function ResourceForm({
   const header = (
     <>
       <p className="mb-2 text-sm text-muted-foreground">
-        Archivo <span className="px-1">›</span>
+        {cfg.section ?? "Archivo"} <span className="px-1">›</span>
         <button onClick={() => router.push(cfg.path)} className="hover:text-foreground">
           {cfg.plural}
         </button>

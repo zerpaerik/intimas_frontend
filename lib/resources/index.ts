@@ -8,6 +8,7 @@ import { personal } from "./personal";
 import { centros } from "./centros";
 import { productos } from "./productos";
 import { material } from "./material";
+import { usuarios } from "./usuarios";
 import type { ResourceConfig } from "./types";
 
 /** Orden de los maestros (coincide con el menú Archivo). */
@@ -24,8 +25,11 @@ export const RESOURCES: ResourceConfig[] = [
   material,
 ];
 
+/** Recursos fuera del menú Archivo (p. ej. Administrativo). */
+export const EXTRA_RESOURCES: ResourceConfig[] = [usuarios];
+
 export const RESOURCE_MAP: Record<string, ResourceConfig> = Object.fromEntries(
-  RESOURCES.map((r) => [r.key, r]),
+  [...RESOURCES, ...EXTRA_RESOURCES].map((r) => [r.key, r]),
 );
 
 export function getResource(key: string): ResourceConfig | undefined {

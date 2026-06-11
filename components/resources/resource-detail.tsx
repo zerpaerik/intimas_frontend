@@ -85,6 +85,10 @@ function FieldValue({
       </span>
     );
   }
+  if (field.options) {
+    const opt = field.options.find((o) => o.value === String(value));
+    return <span>{opt?.label ?? String(value)}</span>;
+  }
   return <span>{String(value)}</span>;
 }
 
@@ -112,7 +116,7 @@ function DetailInner({ cfg, row }: { cfg: ResourceConfig; row: Row }) {
       </CardHeader>
       <CardContent className="pt-6">
         <dl className="grid grid-cols-1 gap-x-10 gap-y-5 sm:grid-cols-2">
-          {cfg.fields.map((f) => (
+          {cfg.fields.filter((f) => f.type !== "password").map((f) => (
             <div key={f.name} className={cn(f.span === 2 && "sm:col-span-2")}>
               <dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{f.label}</dt>
               <dd className="mt-1 text-sm">
@@ -144,7 +148,7 @@ export function ResourceDetail({ resourceKey, id }: { resourceKey: string; id: n
   const header = (
     <>
       <p className="mb-2 text-sm text-muted-foreground">
-        Archivo <span className="px-1">›</span>
+        {cfg.section ?? "Archivo"} <span className="px-1">›</span>
         <button onClick={() => router.push(cfg.path)} className="hover:text-foreground">
           {cfg.plural}
         </button>

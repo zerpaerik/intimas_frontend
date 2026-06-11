@@ -128,7 +128,7 @@ export default function DashboardPage() {
             <Card>
               <CardHeader>
                 <CardTitle>{isFinanzas ? "Métodos de pago" : "Atenciones por estado"}</CardTitle>
-                <CardDescription>{isFinanzas ? "Distribución" : "Acumulado"}</CardDescription>
+                <CardDescription>Hoy</CardDescription>
               </CardHeader>
               <CardContent>
                 {donutData.length === 0 ? (
@@ -156,7 +156,7 @@ export default function DashboardPage() {
             <Card className="lg:col-span-2">
               <CardHeader>
                 <CardTitle>Servicios más solicitados</CardTitle>
-                <CardDescription>Por número de atenciones</CardDescription>
+                <CardDescription>Hoy · por número de atenciones</CardDescription>
               </CardHeader>
               <CardContent>
                 {s.topServicios.length === 0 ? (

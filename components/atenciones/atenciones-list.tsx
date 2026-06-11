@@ -4,10 +4,11 @@ import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Eye, MoreHorizontal, Pencil, Plus, Search, Trash2, TriangleAlert } from "lucide-react";
+import { CalendarDays, Eye, MoreHorizontal, Pencil, Plus, Search, Trash2, TriangleAlert } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
@@ -38,7 +39,7 @@ import { cn } from "@/lib/utils";
 import { formatPEN, initials } from "@/lib/format";
 import { api } from "@/lib/api/client";
 import { useApiList } from "@/lib/api/hooks";
-import { isToday, type Atencion, type AtnEstado } from "@/lib/api/atenciones";
+import { type Atencion, type AtnEstado } from "@/lib/api/atenciones";
 
 const ESTADO_COLOR: Record<AtnEstado, string> = {
   Pagado: "#16a34a",
@@ -49,25 +50,31 @@ const ESTADO_COLOR: Record<AtnEstado, string> = {
 const fechaCorta = new Intl.DateTimeFormat("es-PE", { day: "2-digit", month: "short" });
 const horaCorta = new Intl.DateTimeFormat("es-PE", { hour: "2-digit", minute: "2-digit" });
 
-type Filtro = "hoy" | "anteriores" | "todas";
+/** Fecha local en formato YYYY-MM-DD (sin desfase de zona horaria). */
+function localDate(d: Date = new Date()) {
+  const off = d.getTimezoneOffset();
+  return new Date(d.getTime() - off * 60000).toISOString().slice(0, 10);
+}
 
 export function AtencionesList() {
   const router = useRouter();
   const { data: atenciones, loading, error, refetch } = useApiList<Atencion>("/atenciones");
 
-  const [filtro, setFiltro] = React.useState<Filtro>("hoy");
+  const today = localDate();
+  const [desde, setDesde] = React.useState(today);
+  const [hasta, setHasta] = React.useState(today);
   const [query, setQuery] = React.useState("");
   const [target, setTarget] = React.useState<Atencion | null>(null);
-
-  const counts = React.useMemo(() => {
-    const hoy = atenciones.filter((a) => isToday(a.fecha)).length;
-    return { hoy, anteriores: atenciones.length - hoy, todas: atenciones.length };
-  }, [atenciones]);
 
   const rows = React.useMemo(() => {
     const q = query.trim().toLowerCase();
     return [...atenciones]
-      .filter((a) => (filtro === "hoy" ? isToday(a.fecha) : filtro === "anteriores" ? !isToday(a.fecha) : true))
+      .filter((a) => {
+        const f = localDate(new Date(a.fecha));
+        if (desde && f < desde) return false;
+        if (hasta && f > hasta) return false;
+        return true;
+      })
       .filter((a) =>
         !q
           ? true
@@ -75,13 +82,10 @@ export function AtencionesList() {
             String(a.paciente?.numDoc ?? "").toLowerCase().includes(q),
       )
       .sort((a, b) => +new Date(b.fecha) - +new Date(a.fecha));
-  }, [atenciones, filtro, query]);
+  }, [atenciones, desde, hasta, query]);
 
-  const TABS: { key: Filtro; label: string; n: number }[] = [
-    { key: "hoy", label: "Hoy", n: counts.hoy },
-    { key: "anteriores", label: "Anteriores", n: counts.anteriores },
-    { key: "todas", label: "Todas", n: counts.todas },
-  ];
+  const isHoy = desde === today && hasta === today;
+  const isTodas = !desde && !hasta;
 
   async function confirmDelete() {
     if (!target) return;
@@ -103,7 +107,7 @@ export function AtencionesList() {
       </p>
       <PageHeader
         title="Atenciones"
-        description="Registro de atenciones del día y anteriores."
+        description="Registro de atenciones por fecha."
         actions={
           <Button asChild className="bg-brand-gradient text-white">
             <Link href="/movimientos/atenciones/nueva">
@@ -115,28 +119,41 @@ export function AtencionesList() {
       />
 
       <div className="rounded-2xl border bg-card">
-        <div className="flex flex-wrap items-center gap-3 border-b p-3">
-          <div className="flex rounded-lg border p-0.5">
-            {TABS.map((t) => (
-              <button
-                key={t.key}
-                onClick={() => setFiltro(t.key)}
-                className={cn(
-                  "rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
-                  filtro === t.key ? "bg-brand text-white" : "text-muted-foreground hover:text-foreground",
-                )}
-              >
-                {t.label}
-                <span className={cn("ml-1.5 text-xs", filtro === t.key ? "text-white/80" : "text-muted-foreground")}>
-                  {t.n}
-                </span>
-              </button>
-            ))}
+        {/* Filtros por fecha */}
+        <div className="flex flex-wrap items-end gap-3 border-b p-3">
+          <div className="space-y-1">
+            <Label htmlFor="desde" className="text-xs text-muted-foreground">Desde</Label>
+            <Input id="desde" type="date" value={desde} max={hasta || undefined} onChange={(e) => setDesde(e.target.value)} className="h-9 w-[9.5rem]" />
           </div>
+          <div className="space-y-1">
+            <Label htmlFor="hasta" className="text-xs text-muted-foreground">Hasta</Label>
+            <Input id="hasta" type="date" value={hasta} min={desde || undefined} onChange={(e) => setHasta(e.target.value)} className="h-9 w-[9.5rem]" />
+          </div>
+          <Button
+            variant={isHoy ? "default" : "outline"}
+            size="sm"
+            className={cn("h-9", isHoy && "bg-brand text-white hover:bg-brand/90")}
+            onClick={() => { setDesde(today); setHasta(today); }}
+          >
+            <CalendarDays className="h-4 w-4" />
+            Hoy
+          </Button>
+          <Button
+            variant={isTodas ? "default" : "outline"}
+            size="sm"
+            className={cn("h-9", isTodas && "bg-brand text-white hover:bg-brand/90")}
+            onClick={() => { setDesde(""); setHasta(""); }}
+          >
+            Todas
+          </Button>
+
           <div className="relative ml-auto w-full max-w-xs">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Buscar paciente…" className="pl-9" />
+            <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Buscar paciente…" className="h-9 pl-9" />
           </div>
+          <span className="text-sm text-muted-foreground">
+            {rows.length} registro{rows.length === 1 ? "" : "s"}
+          </span>
         </div>
 
         {error ? (
@@ -152,7 +169,7 @@ export function AtencionesList() {
           </div>
         ) : rows.length === 0 ? (
           <div className="py-16 text-center text-sm text-muted-foreground">
-            {filtro === "hoy" ? "No hay atenciones registradas hoy." : "No se encontraron atenciones."}
+            {isHoy ? "No hay atenciones registradas hoy." : "No hay atenciones en el rango seleccionado."}
           </div>
         ) : (
           <Table>

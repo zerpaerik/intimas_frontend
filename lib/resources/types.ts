@@ -11,6 +11,7 @@ export type FieldType =
   | "percent"
   | "email"
   | "tel"
+  | "password"
   | "date"
   | "select"
   | "multiselect";
@@ -33,6 +34,12 @@ export interface FieldDef {
   /** Ancho en la grilla del formulario. */
   span?: 1 | 2;
   help?: string;
+  /** Oculta el campo al editar (p. ej. contraseña). */
+  hideOnEdit?: boolean;
+  /** Requerido solo al crear (no al editar). */
+  requiredOnCreate?: boolean;
+  /** Select con opciones estáticas que debe enviarse como número (FK). */
+  numeric?: boolean;
 }
 
 export type ColumnType =
@@ -61,6 +68,8 @@ export interface ColumnDef {
 export interface ResourceConfig {
   key: string;
   path: string;
+  /** Sección para los breadcrumbs (por defecto "Archivo"). */
+  section?: string;
   singular: string;
   plural: string;
   /** Género para textos ("el"/"la"). */
