@@ -1,14 +1,22 @@
-/** Tipos de la API de atenciones (respuestas del backend NestJS). */
+/** Tipos de la API de atenciones (respuestas del backend NestJS). Montos llegan como Decimal (string); usar Number() al operar. */
 
 export type AtnEstado = "Pagado" | "Parcial" | "Pendiente";
+
+export const METODOS_PAGO = ["Efectivo", "Tarjeta", "Depósito", "Yape"];
 
 export interface AtnItem {
   id?: number;
   kind: string;
   nombre: string;
   monto: number;
-  abono: number;
-  pago: string;
+}
+
+export interface Pago {
+  id: number;
+  monto: number;
+  metodo: string;
+  tipo: string; // ABONO_INICIAL | COBRO
+  fecha: string;
 }
 
 export interface AtnPaciente {
@@ -31,9 +39,14 @@ export interface Atencion {
   origenValor?: string;
   observaciones?: string;
   total: number;
-  abono: number;
+  pagado: number;
   saldo: number;
   estado: AtnEstado;
+  pagos: Pago[];
+  anulada: boolean;
+  anuladaAt?: string | null;
+  motivoAnulacion?: string | null;
+  anuladaPor?: { id: number; nombre: string } | null;
   usuario?: { id: number; nombre: string } | null;
   items: AtnItem[];
 }
@@ -41,9 +54,5 @@ export interface Atencion {
 export function isToday(iso: string): boolean {
   const d = new Date(iso);
   const n = new Date();
-  return (
-    d.getFullYear() === n.getFullYear() &&
-    d.getMonth() === n.getMonth() &&
-    d.getDate() === n.getDate()
-  );
+  return d.getFullYear() === n.getFullYear() && d.getMonth() === n.getMonth() && d.getDate() === n.getDate();
 }

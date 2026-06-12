@@ -1,15 +1,20 @@
 "use client";
 
-import { CalendarClock, FileText, HeartPulse } from "lucide-react";
+import * as React from "react";
+import { CalendarClock, FileText, HandCoins, HeartPulse } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
 import { calcAge, formatDate, formatPEN, initials } from "@/lib/format";
 import { useApiItem } from "@/lib/api/hooks";
 import type { Row } from "@/lib/resources/types";
+import { CobroDialog } from "./cobro-dialog";
 
-interface HistorialItem { kind: string; nombre: string; monto: number; abono: number; pago: string }
+interface HistorialItem { kind: string; nombre: string; monto: number }
 interface HistorialAtencion {
-  id: number; fecha: string; origenValor?: string; total: number; estado: string; items: HistorialItem[];
+  id: number; fecha: string; origenValor?: string;
+  total: number; pagado: number; saldo: number; estado: string;
+  items: HistorialItem[];
 }
 interface HistorialResultado { nombre: string; tipo: string; fecha: string; estado: string }
 interface Historial {
@@ -35,13 +40,14 @@ function Dato({ label, value }: { label: string; value?: string | null }) {
   );
 }
 
-export function PatientHistory({ patient }: { patient: Row }) {
+export function PatientHistory({ patient, onCobro }: { patient: Row; onCobro?: () => void }) {
   const nombre = `${patient.nombres ?? ""} ${patient.apellidos ?? ""}`.trim();
   const sexo = String(patient.sexo ?? "Femenino");
   const edad = patient.fechaNacimiento ? calcAge(String(patient.fechaNacimiento)) : null;
-  const { data: h, loading } = useApiItem<Historial>(
+  const { data: h, loading, refetch } = useApiItem<Historial>(
     patient.id ? `/pacientes/${patient.id}/historial` : null,
   );
+  const [cobro, setCobro] = React.useState<HistorialAtencion | null>(null);
 
   return (
     <div className="overflow-hidden rounded-2xl border bg-card">
@@ -120,6 +126,7 @@ export function PatientHistory({ patient }: { patient: Row }) {
               <ol className="relative space-y-3 border-l border-border pl-4">
                 {h.atenciones.map((a) => {
                   const color = ESTADO_COLOR[a.estado] ?? "#64748b";
+                  const saldo = Number(a.saldo);
                   return (
                     <li key={a.id} className="relative">
                       <span className="absolute -left-[1.32rem] top-1.5 h-2 w-2 rounded-full bg-brand ring-4 ring-card" />
@@ -137,9 +144,17 @@ export function PatientHistory({ patient }: { patient: Row }) {
                           <span key={i} className="rounded-md bg-muted px-1.5 py-0.5 text-xs">{it.nombre}</span>
                         ))}
                       </div>
-                      <p className="mt-1 text-xs text-muted-foreground">
-                        {a.origenValor || "—"} · {formatPEN(a.total)}
-                      </p>
+                      <div className="mt-1 flex items-center justify-between gap-2">
+                        <p className="text-xs text-muted-foreground">
+                          {a.origenValor || "—"} · {formatPEN(Number(a.total))}
+                          {saldo > 0 && <span className="text-destructive"> · debe {formatPEN(saldo)}</span>}
+                        </p>
+                        {saldo > 0 && (
+                          <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => setCobro(a)}>
+                            <HandCoins className="h-3.5 w-3.5" /> Abonar
+                          </Button>
+                        )}
+                      </div>
                     </li>
                   );
                 })}
@@ -164,6 +179,17 @@ export function PatientHistory({ patient }: { patient: Row }) {
             )}
           </TabsContent>
         </Tabs>
+      )}
+
+      {cobro && (
+        <CobroDialog
+          open={!!cobro}
+          onOpenChange={(o) => !o && setCobro(null)}
+          atencionId={cobro.id}
+          saldo={Number(cobro.saldo)}
+          paciente={nombre}
+          onDone={() => { refetch(); onCobro?.(); }}
+        />
       )}
     </div>
   );

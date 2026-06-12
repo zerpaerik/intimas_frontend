@@ -4,35 +4,21 @@ import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { ArrowLeft, Pencil, Printer, Trash2 } from "lucide-react";
+import { ArrowLeft, Ban, HandCoins, Pencil, Printer, ShieldAlert } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import { formatPEN, formatDateLong, initials } from "@/lib/format";
-import { api } from "@/lib/api/client";
 import { useApiItem } from "@/lib/api/hooks";
-import { type Atencion, type AtnEstado } from "@/lib/api/atenciones";
+import { isToday, type Atencion, type AtnEstado } from "@/lib/api/atenciones";
+import { useAuth } from "@/lib/auth/store";
+import { CobroDialog } from "./cobro-dialog";
+import { AnularDialog } from "./anular-dialog";
 import { PatientHistory } from "./patient-history";
 import type { Row } from "@/lib/resources/types";
 
@@ -42,9 +28,18 @@ const ESTADO_COLOR: Record<AtnEstado, string> = {
   Pendiente: "#ef4444",
 };
 
+const horaCorta = new Intl.DateTimeFormat("es-PE", { hour: "2-digit", minute: "2-digit" });
+
 export function AtencionDetail({ id }: { id: number }) {
   const router = useRouter();
-  const { data: atencion, loading } = useApiItem<Atencion>(id ? `/atenciones/${id}` : null);
+  const roleId = useAuth((s) => s.session?.roleId ?? 1);
+  const { data: atencion, loading, refetch } = useApiItem<Atencion>(id ? `/atenciones/${id}` : null);
+  const [cobroOpen, setCobroOpen] = React.useState(false);
+  const [anularOpen, setAnularOpen] = React.useState(false);
+
+  const anulada = !!atencion?.anulada;
+  const puedeEditar = !!atencion && !anulada && (isToday(atencion.fecha) || roleId === 1);
+  const saldo = Number(atencion?.saldo ?? 0);
 
   const header = (
     <>
@@ -64,41 +59,21 @@ export function AtencionDetail({ id }: { id: number }) {
             <Button variant="outline" onClick={() => toast.info("Impresión de ticket disponible en la versión final.")}>
               <Printer className="h-4 w-4" /><span className="hidden sm:inline">Ticket</span>
             </Button>
-            {atencion && (
+            {atencion && !anulada && (
               <>
-                <Button asChild variant="outline">
-                  <Link href={`/movimientos/atenciones/${id}/editar`}><Pencil className="h-4 w-4" />Editar</Link>
+                {saldo > 0 && (
+                  <Button className="bg-brand-gradient text-white" onClick={() => setCobroOpen(true)}>
+                    <HandCoins className="h-4 w-4" /><span className="hidden sm:inline">Abonar</span>
+                  </Button>
+                )}
+                {puedeEditar && (
+                  <Button asChild variant="outline">
+                    <Link href={`/movimientos/atenciones/${id}/editar`}><Pencil className="h-4 w-4" /><span className="hidden sm:inline">Editar</span></Link>
+                  </Button>
+                )}
+                <Button variant="outline" className="text-destructive hover:text-destructive" onClick={() => setAnularOpen(true)}>
+                  <Ban className="h-4 w-4" /><span className="hidden sm:inline">Anular</span>
                 </Button>
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button variant="outline" className="text-destructive hover:text-destructive">
-                      <Trash2 className="h-4 w-4" /><span className="hidden sm:inline">Eliminar</span>
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>¿Eliminar atención?</AlertDialogTitle>
-                      <AlertDialogDescription>Esta acción no se puede deshacer.</AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                      <AlertDialogAction
-                        className="bg-destructive text-white hover:bg-destructive/90"
-                        onClick={async () => {
-                          try {
-                            await api.del(`/atenciones/${id}`);
-                            toast.success("Atención eliminada");
-                            router.push("/movimientos/atenciones");
-                          } catch (e) {
-                            toast.error(e instanceof Error ? e.message : "No se pudo eliminar");
-                          }
-                        }}
-                      >
-                        Eliminar
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
               </>
             )}
           </>
@@ -118,14 +93,29 @@ export function AtencionDetail({ id }: { id: number }) {
 
   const nombre = `${atencion.paciente?.nombres ?? ""} ${atencion.paciente?.apellidos ?? ""}`.trim();
   const dt = new Date(atencion.fecha);
-  const color = ESTADO_COLOR[atencion.estado] ?? "#64748b";
+  const color = anulada ? "#64748b" : (ESTADO_COLOR[atencion.estado] ?? "#64748b");
 
   return (
     <div>
       {header}
+
+      {anulada && (
+        <div className="mb-5 flex items-start gap-3 rounded-2xl border border-destructive/30 bg-destructive/5 p-4">
+          <ShieldAlert className="mt-0.5 h-5 w-5 shrink-0 text-destructive" />
+          <div className="text-sm">
+            <p className="font-semibold text-destructive">Atención anulada</p>
+            <p className="text-muted-foreground">
+              Anulada por <strong className="text-foreground">{atencion.anuladaPor?.nombre ?? "—"}</strong>
+              {atencion.anuladaAt && <> el {formatDateLong(atencion.anuladaAt)}</>}.
+              {atencion.motivoAnulacion && <> Motivo: <span className="text-foreground">{atencion.motivoAnulacion}</span></>}
+            </p>
+          </div>
+        </div>
+      )}
+
       <div className="grid items-start gap-6 lg:grid-cols-[1.55fr_1fr]">
         <div className="space-y-5">
-          <Card>
+          <Card className={cn(anulada && "opacity-80")}>
             <CardHeader className="border-b">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
@@ -136,12 +126,12 @@ export function AtencionDetail({ id }: { id: number }) {
                     <CardTitle>{nombre}</CardTitle>
                     <p className="text-sm text-muted-foreground">
                       {atencion.paciente?.tipoDoc} {atencion.paciente?.numDoc} · {formatDateLong(atencion.fecha)},{" "}
-                      {dt.toLocaleTimeString("es-PE", { hour: "2-digit", minute: "2-digit" })}
+                      {horaCorta.format(dt)}
                     </p>
                   </div>
                 </div>
                 <span className="rounded-full px-3 py-1 text-sm font-semibold" style={{ backgroundColor: `color-mix(in srgb, ${color} 14%, transparent)`, color }}>
-                  {atencion.estado}
+                  {anulada ? "Anulada" : atencion.estado}
                 </span>
               </div>
             </CardHeader>
@@ -168,9 +158,7 @@ export function AtencionDetail({ id }: { id: number }) {
                 <TableHeader>
                   <TableRow className="hover:bg-transparent">
                     <TableHead className="text-xs">Ítem</TableHead>
-                    <TableHead className="text-xs">Pago</TableHead>
                     <TableHead className="text-xs text-right">Monto</TableHead>
-                    <TableHead className="text-xs text-right">Abono</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -180,20 +168,62 @@ export function AtencionDetail({ id }: { id: number }) {
                         <span className="text-xs text-muted-foreground">{it.kind}</span>
                         <div className="font-medium">{it.nombre}</div>
                       </TableCell>
-                      <TableCell className="text-muted-foreground">{it.pago}</TableCell>
-                      <TableCell className="text-right tabular-nums">{formatPEN(it.monto)}</TableCell>
-                      <TableCell className="text-right tabular-nums">{formatPEN(it.abono)}</TableCell>
+                      <TableCell className="text-right tabular-nums">{formatPEN(Number(it.monto))}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
               </Table>
               <div className="mt-4 flex justify-end">
                 <div className="w-full max-w-xs space-y-1.5 text-sm">
-                  <div className="flex justify-between"><span className="text-muted-foreground">Total</span><span className="font-medium tabular-nums">{formatPEN(atencion.total)}</span></div>
-                  <div className="flex justify-between"><span className="text-muted-foreground">Abono</span><span className="font-medium tabular-nums text-success">{formatPEN(atencion.abono)}</span></div>
-                  <div className="flex justify-between border-t pt-1.5"><span className="font-semibold">Saldo</span><span className={cn("font-bold tabular-nums", atencion.saldo > 0 && "text-destructive")}>{formatPEN(atencion.saldo)}</span></div>
+                  <div className="flex justify-between"><span className="text-muted-foreground">Total</span><span className="font-medium tabular-nums">{formatPEN(Number(atencion.total))}</span></div>
+                  <div className="flex justify-between"><span className="text-muted-foreground">Pagado</span><span className="font-medium tabular-nums text-success">{formatPEN(Number(atencion.pagado))}</span></div>
+                  <div className="flex justify-between border-t pt-1.5"><span className="font-semibold">Saldo</span><span className={cn("font-bold tabular-nums", saldo > 0 && "text-destructive")}>{formatPEN(saldo)}</span></div>
                 </div>
               </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle>Pagos</CardTitle>
+                {!anulada && saldo > 0 && (
+                  <Button size="sm" variant="outline" onClick={() => setCobroOpen(true)}>
+                    <HandCoins className="h-4 w-4" /> Abonar
+                  </Button>
+                )}
+              </div>
+            </CardHeader>
+            <CardContent>
+              {atencion.pagos.length === 0 ? (
+                <p className="py-6 text-center text-sm text-muted-foreground">
+                  {anulada ? "Los pagos fueron anulados junto con la atención." : "Sin pagos registrados. Esta atención está al crédito."}
+                </p>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow className="hover:bg-transparent">
+                      <TableHead className="text-xs">Fecha</TableHead>
+                      <TableHead className="text-xs">Tipo</TableHead>
+                      <TableHead className="text-xs">Método</TableHead>
+                      <TableHead className="text-xs text-right">Monto</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {atencion.pagos.map((p) => {
+                      const pdt = new Date(p.fecha);
+                      return (
+                        <TableRow key={p.id}>
+                          <TableCell className="text-muted-foreground">{formatDateLong(p.fecha)}, {horaCorta.format(pdt)}</TableCell>
+                          <TableCell><span className="rounded-md bg-muted px-1.5 py-0.5 text-xs">{p.tipo === "ABONO_INICIAL" ? "Abono inicial" : "Cobro"}</span></TableCell>
+                          <TableCell className="text-muted-foreground">{p.metodo}</TableCell>
+                          <TableCell className="text-right tabular-nums font-medium">{formatPEN(Number(p.monto))}</TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              )}
             </CardContent>
           </Card>
 
@@ -206,9 +236,26 @@ export function AtencionDetail({ id }: { id: number }) {
         </div>
 
         <div className="lg:sticky lg:top-20 lg:self-start">
-          <PatientHistory patient={atencion.paciente as unknown as Row} />
+          <PatientHistory patient={atencion.paciente as unknown as Row} onCobro={refetch} />
         </div>
       </div>
+
+      <CobroDialog
+        open={cobroOpen}
+        onOpenChange={setCobroOpen}
+        atencionId={atencion.id}
+        saldo={saldo}
+        paciente={nombre}
+        onDone={refetch}
+      />
+      <AnularDialog
+        open={anularOpen}
+        onOpenChange={setAnularOpen}
+        path={`/atenciones/${atencion.id}/anular`}
+        titulo="Anular atención"
+        descripcion="La atención quedará anulada (no se elimina) y dejará de sumar en caja. Sus pagos también se anulan. Se guardará quién la anuló y el motivo."
+        onDone={refetch}
+      />
     </div>
   );
 }

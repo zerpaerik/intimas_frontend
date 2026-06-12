@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import {
-  Activity, ArrowRight, Banknote, CalendarClock, ClipboardPlus, CreditCard,
-  Landmark, Smartphone, Stethoscope, TrendingUp, UserRound, Wallet,
+  Activity, ArrowRight, Banknote, CalendarClock, ClipboardPlus,
+  Receipt, Scale, Smartphone, Stethoscope, TrendingUp, UserRound, Wallet,
 } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { KpiCard } from "@/components/dashboard/kpi-card";
@@ -17,7 +17,7 @@ import { formatPEN, formatDateLong } from "@/lib/format";
 import { useApiItem } from "@/lib/api/hooks";
 
 interface Summary {
-  kpisHoy: { efectivo: number; tarjeta: number; deposito: number; yape: number; total: number; atenciones: number };
+  kpisHoy: { efectivo: number; tarjeta: number; deposito: number; yape: number; total: number; gastos: number; neto: number; atenciones: number };
   ingresosPorDia: { dia: string; ingresos: number }[];
   atencionesPorDia: { dia: string; atenciones: number }[];
   metodosPago: { name: string; value: number; color: string }[];
@@ -57,11 +57,11 @@ export default function DashboardPage() {
     ? []
     : isFinanzas
       ? [
+          { label: "Ingresos del día", value: formatPEN(s.kpisHoy.total), icon: Wallet, accent: "#00b8a9" },
+          { label: "Gastos del día", value: formatPEN(s.kpisHoy.gastos), icon: Receipt, accent: "#ef4444" },
+          { label: "Neto del día", value: formatPEN(s.kpisHoy.neto), icon: Scale, accent: s.kpisHoy.neto >= 0 ? "#16a34a" : "#ef4444" },
           { label: "Efectivo", value: formatPEN(s.kpisHoy.efectivo), icon: Banknote, accent: "#16a34a" },
-          { label: "Tarjeta", value: formatPEN(s.kpisHoy.tarjeta), icon: CreditCard, accent: "#0091d5" },
-          { label: "Depósito", value: formatPEN(s.kpisHoy.deposito), icon: Landmark, accent: "#7c3aed" },
           { label: "Yape", value: formatPEN(s.kpisHoy.yape), icon: Smartphone, accent: "#e6007e" },
-          { label: "Total del día", value: formatPEN(s.kpisHoy.total), icon: Wallet, accent: "#00b8a9" },
           { label: "Atenciones hoy", value: String(s.kpisHoy.atenciones), icon: ClipboardPlus, accent: "#f5a623" },
         ]
       : [
