@@ -73,6 +73,7 @@ export const NAV: NavGroup[] = [
       { label: "Centros", href: "/archivos/centros", icon: Building2, roles: [1], built: true },
       { label: "Productos", href: "/archivos/productos", icon: Boxes, roles: [1], built: true },
       { label: "Material", href: "/archivos/material", icon: Droplets, roles: [1], built: true },
+      { label: "Tipos de Consulta", href: "/archivos/tipos-consulta", icon: NotebookPen, roles: [1], built: true },
     ],
   },
   {
@@ -122,9 +123,9 @@ export const NAV: NavGroup[] = [
     id: "consultas",
     label: "Consultas",
     items: [
-      { label: "Lista de Consultas", href: "/consultas/lista", icon: NotebookPen, roles: [1, 2, 10] },
-      { label: "Ver Historias", href: "/consultas/historias", icon: NotebookPen, roles: [1, 2, 7, 10] },
-      { label: "Ver Controles", href: "/consultas/controles", icon: NotebookPen, roles: [1, 2, 7, 10] },
+      { label: "Lista de Consultas", href: "/consultas/lista", icon: NotebookPen, roles: [1, 2, 7, 10], built: true },
+      { label: "Ver Historias", href: "/consultas/historias", icon: NotebookPen, roles: [1, 2, 7, 10], built: true },
+      { label: "Ver Controles", href: "/consultas/controles", icon: NotebookPen, roles: [1, 2, 7, 10], built: true },
     ],
   },
   {

@@ -8,6 +8,7 @@ import { personal } from "./personal";
 import { centros } from "./centros";
 import { productos } from "./productos";
 import { material } from "./material";
+import { tiposConsulta } from "./tipos-consulta";
 import { usuarios } from "./usuarios";
 import type { ResourceConfig } from "./types";
 
@@ -23,6 +24,7 @@ export const RESOURCES: ResourceConfig[] = [
   centros,
   productos,
   material,
+  tiposConsulta,
 ];
 
 /** Recursos fuera del menú Archivo (p. ej. Administrativo). */

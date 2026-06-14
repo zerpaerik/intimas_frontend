@@ -227,6 +227,36 @@ export function AtencionDetail({ id }: { id: number }) {
             </CardContent>
           </Card>
 
+          {atencion.consultas && atencion.consultas.length > 0 && (
+            <Card>
+              <CardHeader><CardTitle>Consultas</CardTitle></CardHeader>
+              <CardContent className="space-y-2">
+                {atencion.consultas.map((co) => {
+                  const atendida = co.estado === "Atendida";
+                  return (
+                    <div key={co.id} className="flex items-center justify-between gap-2 rounded-xl border p-3">
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-1.5 font-medium">
+                          {co.tipoNombre}
+                          {co.prenatal && <span className="rounded bg-brand/10 px-1.5 py-0.5 text-[10px] font-medium text-brand">prenatal</span>}
+                          <span className="rounded-full px-2 py-0.5 text-[11px] font-medium" style={{ backgroundColor: `color-mix(in srgb, ${atendida ? "#16a34a" : "#f5a623"} 14%, transparent)`, color: atendida ? "#16a34a" : "#f5a623" }}>
+                            {co.estado}
+                          </span>
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          {co.especialista ? `${co.especialista.nombres} ${co.especialista.apellidos}` : "Sin especialista asignado"}
+                        </p>
+                      </div>
+                      <Button asChild size="sm" variant={atendida ? "outline" : "default"} className={cn(!atendida && "bg-brand-gradient text-white")}>
+                        <Link href={`/consultas/${co.id}/atender`}>{atendida ? "Ver" : "Atender"}</Link>
+                      </Button>
+                    </div>
+                  );
+                })}
+              </CardContent>
+            </Card>
+          )}
+
           {atencion.observaciones && (
             <Card>
               <CardHeader><CardTitle>Observaciones</CardTitle></CardHeader>

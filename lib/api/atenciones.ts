@@ -49,6 +49,17 @@ export interface Atencion {
   anuladaPor?: { id: number; nombre: string } | null;
   usuario?: { id: number; nombre: string } | null;
   items: AtnItem[];
+  consultas?: AtnConsulta[];
+}
+
+export interface AtnConsulta {
+  id: number;
+  tipoNombre: string;
+  estado: string;
+  prenatal: boolean;
+  especialista?: { id: number; nombres: string; apellidos: string } | null;
+  historia?: { id: number } | null;
+  control?: { id: number } | null;
 }
 
 export function isToday(iso: string): boolean {

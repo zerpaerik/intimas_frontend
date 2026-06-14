@@ -4,7 +4,7 @@ import * as React from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
-  AlertTriangle, ArrowLeft, CheckCircle2, ClipboardCheck, HandCoins, HeartPulse, Loader2, Plus, Trash2, UserSearch, Wallet,
+  AlertTriangle, ArrowLeft, CheckCircle2, ClipboardCheck, HandCoins, HeartPulse, Loader2, Plus, Stethoscope, Trash2, UserSearch, Wallet,
 } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
@@ -37,7 +37,17 @@ const KIND_COLOR: Record<string, string> = {
   Método: "#e6007e",
 };
 
-interface LineItem { uid: number; kind: string; nombre: string; monto: number }
+interface LineItem {
+  uid: number;
+  kind: string;
+  nombre: string;
+  monto: number;
+  esConsulta?: boolean;
+  tipoConsultaId?: number;
+  prenatal?: boolean;
+  especialidad?: string;
+  especialistaId?: number;
+}
 interface PayLine { uid: number; monto: number; metodo: string }
 
 function Step({ n, title, children, icon: Icon }: { n: number; title: string; icon: React.ElementType; children: React.ReactNode }) {
@@ -97,7 +107,19 @@ function RegistroForm({ mode, initial }: { mode: "create" | "edit"; initial?: At
   }, [total, mode]);
 
   function addItem(item: CatalogItem) {
-    setItems((prev) => [...prev, { uid: uid.current++, kind: item.kind, nombre: item.nombre, monto: item.precio }]);
+    setItems((prev) => [
+      ...prev,
+      {
+        uid: uid.current++,
+        kind: item.kind,
+        nombre: item.nombre,
+        monto: item.precio,
+        esConsulta: item.tipoConsultaId != null || item.kind === "Consulta",
+        tipoConsultaId: item.tipoConsultaId,
+        prenatal: item.prenatal,
+        especialidad: item.especialidad,
+      },
+    ]);
   }
   const patchItem = (id: number, patch: Partial<LineItem>) =>
     setItems((prev) => prev.map((it) => (it.uid === id ? { ...it, ...patch } : it)));
@@ -141,6 +163,15 @@ function RegistroForm({ mode, initial }: { mode: "create" | "edit"; initial?: At
           observaciones,
           items: items.map((it) => ({ kind: it.kind, nombre: it.nombre, monto: it.monto })),
           pagos: pagos.filter((p) => (Number(p.monto) || 0) > 0).map((p) => ({ monto: p.monto, metodo: p.metodo })),
+          consultas: items
+            .filter((it) => it.esConsulta)
+            .map((it) => ({
+              tipoConsultaId: it.tipoConsultaId,
+              tipoNombre: it.nombre,
+              especialidad: it.especialidad,
+              prenatal: it.prenatal ?? false,
+              especialistaId: it.especialistaId,
+            })),
         };
         const a = await api.post<Atencion>("/atenciones", payload);
         toast.success(`Atención registrada · ${formatPEN(total)}${saldo > 0.001 ? ` · pendiente ${formatPEN(saldo)}` : ""}`);
@@ -231,18 +262,38 @@ function RegistroForm({ mode, initial }: { mode: "create" | "edit"; initial?: At
                 {items.map((it) => {
                   const color = KIND_COLOR[it.kind] ?? "#64748b";
                   return (
-                    <div key={it.uid} className="flex items-center gap-2 rounded-xl border p-3">
-                      <span className="rounded-full px-2 py-0.5 text-[11px] font-medium" style={{ backgroundColor: `color-mix(in srgb, ${color} 14%, transparent)`, color }}>
-                        {it.kind}
-                      </span>
-                      <span className="flex-1 text-sm font-medium">{it.nombre}</span>
-                      <div className="relative w-32">
-                        <span className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">S/</span>
-                        <Input type="number" value={it.monto} onChange={(e) => patchItem(it.uid, { monto: Number(e.target.value) })} className="h-9 pl-7 text-right" />
+                    <div key={it.uid} className="rounded-xl border p-3">
+                      <div className="flex items-center gap-2">
+                        <span className="rounded-full px-2 py-0.5 text-[11px] font-medium" style={{ backgroundColor: `color-mix(in srgb, ${color} 14%, transparent)`, color }}>
+                          {it.kind}
+                        </span>
+                        <span className="flex-1 text-sm font-medium">
+                          {it.nombre}
+                          {it.prenatal && <span className="ml-1.5 rounded bg-brand/10 px-1.5 py-0.5 text-[10px] font-medium text-brand">prenatal</span>}
+                        </span>
+                        <div className="relative w-28">
+                          <span className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">S/</span>
+                          <Input type="number" value={it.monto} onChange={(e) => patchItem(it.uid, { monto: Number(e.target.value) })} className="h-9 pl-7 text-right" />
+                        </div>
+                        <button onClick={() => removeItem(it.uid)} className="text-muted-foreground transition-colors hover:text-destructive" aria-label="Quitar">
+                          <Trash2 className="h-4 w-4" />
+                        </button>
                       </div>
-                      <button onClick={() => removeItem(it.uid)} className="text-muted-foreground transition-colors hover:text-destructive" aria-label="Quitar">
-                        <Trash2 className="h-4 w-4" />
-                      </button>
+                      {it.esConsulta && (
+                        <div className="mt-2.5 flex items-center gap-2">
+                          <Stethoscope className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                          <Select value={it.especialistaId ? String(it.especialistaId) : undefined} onValueChange={(v) => patchItem(it.uid, { especialistaId: v ? Number(v) : undefined })}>
+                            <SelectTrigger className="h-9 w-full"><SelectValue placeholder="Asignar especialista (opcional)…" /></SelectTrigger>
+                            <SelectContent>
+                              {profesionales.data.map((p) => (
+                                <SelectItem key={p.id} value={String(p.id)}>
+                                  {String(p.nombres)} {String(p.apellidos)}{p.especialidad ? ` · ${String(p.especialidad)}` : ""}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      )}
                     </div>
                   );
                 })}

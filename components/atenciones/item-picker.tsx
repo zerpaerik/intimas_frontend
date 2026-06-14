@@ -16,15 +16,11 @@ export interface CatalogItem {
   kind: string;
   nombre: string;
   precio: number;
+  /** Metadatos cuando es una consulta (kind === "Consulta"). */
+  tipoConsultaId?: number;
+  prenatal?: boolean;
+  especialidad?: string;
 }
-
-const CONSULTAS: CatalogItem[] = [
-  { kind: "Consulta", nombre: "Consulta ginecológica", precio: 60 },
-  { kind: "Consulta", nombre: "Control prenatal", precio: 50 },
-  { kind: "Consulta", nombre: "Consulta psiquiátrica", precio: 120 },
-  { kind: "Consulta", nombre: "Medicina general", precio: 40 },
-  { kind: "Consulta", nombre: "Nutrición", precio: 70 },
-];
 
 const METODOS: CatalogItem[] = [
   { kind: "Método", nombre: "Inyectable mensual", precio: 25 },
@@ -34,20 +30,20 @@ const METODOS: CatalogItem[] = [
 ];
 
 function Item({
-  item,
-  uid,
-  onAdd,
+  value,
+  label,
+  precio,
+  onSelect,
 }: {
-  item: CatalogItem;
-  uid: string;
-  onAdd: (i: CatalogItem) => void;
+  value: string;
+  label: string;
+  precio: number;
+  onSelect: () => void;
 }) {
   return (
-    <CommandItem value={`${item.nombre} ${item.kind} ${uid}`} onSelect={() => onAdd(item)}>
-      <span className="flex-1">{item.nombre}</span>
-      <span className="text-xs font-medium tabular-nums text-muted-foreground">
-        {formatPEN(item.precio)}
-      </span>
+    <CommandItem value={value} onSelect={onSelect}>
+      <span className="flex-1">{label}</span>
+      <span className="text-xs font-medium tabular-nums text-muted-foreground">{formatPEN(precio)}</span>
     </CommandItem>
   );
 }
@@ -64,6 +60,7 @@ export function ItemPicker({
   const servicios = useApiList<Row>("/servicios");
   const analisis = useApiList<Row>("/analisis");
   const paquetes = useApiList<Row>("/paquetes");
+  const tiposConsulta = useApiList<Row>("/tipos-consulta");
 
   const add = (i: CatalogItem) => {
     onAdd(i);
@@ -84,9 +81,10 @@ export function ItemPicker({
           {servicios.data.map((s) => (
             <Item
               key={`s${s.id}`}
-              uid={`s${s.id}`}
-              item={{ kind: String(s.tipo ?? "Servicio"), nombre: String(s.nombre), precio: Number(s.precio) }}
-              onAdd={add}
+              value={`${s.nombre} servicio s${s.id}`}
+              label={String(s.nombre)}
+              precio={Number(s.precio)}
+              onSelect={() => add({ kind: String(s.tipo ?? "Servicio"), nombre: String(s.nombre), precio: Number(s.precio) })}
             />
           ))}
         </CommandGroup>
@@ -94,9 +92,10 @@ export function ItemPicker({
           {analisis.data.map((a) => (
             <Item
               key={`a${a.id}`}
-              uid={`a${a.id}`}
-              item={{ kind: "Laboratorio", nombre: String(a.nombre), precio: Number(a.precio) }}
-              onAdd={add}
+              value={`${a.nombre} laboratorio a${a.id}`}
+              label={String(a.nombre)}
+              precio={Number(a.precio)}
+              onSelect={() => add({ kind: "Laboratorio", nombre: String(a.nombre), precio: Number(a.precio) })}
             />
           ))}
         </CommandGroup>
@@ -104,20 +103,36 @@ export function ItemPicker({
           {paquetes.data.map((p) => (
             <Item
               key={`p${p.id}`}
-              uid={`p${p.id}`}
-              item={{ kind: "Paquete", nombre: String(p.nombre), precio: Number(p.precio) }}
-              onAdd={add}
+              value={`${p.nombre} paquete p${p.id}`}
+              label={String(p.nombre)}
+              precio={Number(p.precio)}
+              onSelect={() => add({ kind: "Paquete", nombre: String(p.nombre), precio: Number(p.precio) })}
             />
           ))}
         </CommandGroup>
         <CommandGroup heading="Consultas / Controles">
-          {CONSULTAS.map((c, i) => (
-            <Item key={c.nombre} uid={`c${i}`} item={c} onAdd={add} />
+          {tiposConsulta.data.map((t) => (
+            <Item
+              key={`t${t.id}`}
+              value={`${t.nombre} consulta ${t.especialidad ?? ""} t${t.id}`}
+              label={String(t.nombre)}
+              precio={Number(t.precio)}
+              onSelect={() =>
+                add({
+                  kind: "Consulta",
+                  nombre: String(t.nombre),
+                  precio: Number(t.precio),
+                  tipoConsultaId: Number(t.id),
+                  prenatal: Boolean(t.prenatal),
+                  especialidad: t.especialidad ? String(t.especialidad) : undefined,
+                })
+              }
+            />
           ))}
         </CommandGroup>
         <CommandGroup heading="Métodos anticonceptivos">
           {METODOS.map((m, i) => (
-            <Item key={m.nombre} uid={`m${i}`} item={m} onAdd={add} />
+            <Item key={m.nombre} value={`${m.nombre} metodo m${i}`} label={m.nombre} precio={m.precio} onSelect={() => add(m)} />
           ))}
         </CommandGroup>
       </CommandList>
