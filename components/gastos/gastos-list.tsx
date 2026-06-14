@@ -141,6 +141,7 @@ export function GastosList() {
                     <TableCell>
                       <div className={cn("font-medium", g.anulada && "line-through")}>{g.descripcion}</div>
                       {g.proveedor && <div className="text-xs text-muted-foreground">{g.proveedor}</div>}
+                      {g.nota && <div className="text-xs italic text-muted-foreground">{g.nota}</div>}
                       {g.anulada && g.motivoAnulacion && (
                         <div className="text-xs text-destructive">Anulado · {g.motivoAnulacion}</div>
                       )}

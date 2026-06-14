@@ -5,6 +5,7 @@ export interface Gasto {
   fecha: string;
   categoria?: string | null;
   descripcion: string;
+  nota?: string | null;
   monto: number;
   metodo: string;
   proveedor?: string | null;
@@ -17,6 +18,7 @@ export interface Gasto {
 }
 
 export const CATEGORIAS_GASTO = [
+  "Comisión",
   "Insumos",
   "Servicios (luz, agua, internet)",
   "Alquiler",

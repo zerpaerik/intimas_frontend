@@ -34,6 +34,7 @@ function Form({ initial }: { initial?: Gasto }) {
   const [categoria, setCategoria] = React.useState(initial?.categoria ?? "");
   const [metodo, setMetodo] = React.useState(initial?.metodo ?? "Efectivo");
   const [proveedor, setProveedor] = React.useState(initial?.proveedor ?? "");
+  const [nota, setNota] = React.useState(initial?.nota ?? "");
   const [fecha, setFecha] = React.useState(initial ? localDate(new Date(initial.fecha)) : localDate());
   const [saving, setSaving] = React.useState(false);
 
@@ -47,6 +48,7 @@ function Form({ initial }: { initial?: Gasto }) {
       categoria: categoria || undefined,
       metodo,
       proveedor: proveedor.trim() || undefined,
+      nota: nota.trim() || undefined,
       fecha,
       sedeId,
     };
@@ -122,6 +124,10 @@ function Form({ initial }: { initial?: Gasto }) {
           <div className="space-y-1.5 sm:col-span-2">
             <Label>Proveedor (opcional)</Label>
             <Input value={proveedor} onChange={(e) => setProveedor(e.target.value)} placeholder="Ej. Distribuidora Médica SAC" />
+          </div>
+          <div className="space-y-1.5 sm:col-span-2">
+            <Label>Nota / Justificación (opcional)</Label>
+            <Textarea value={nota} onChange={(e) => setNota(e.target.value)} rows={2} placeholder="Ej. comisión del Dr. Pérez por ecografías de junio" />
           </div>
         </div>
 

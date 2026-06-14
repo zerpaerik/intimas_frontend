@@ -7,26 +7,20 @@ import {
   CalendarClock,
   ClipboardPlus,
   Contact,
-  CreditCard,
   Droplets,
   FileCheck2,
   HandCoins,
-  History,
   KeyRound,
   LayoutDashboard,
   Microscope,
   MonitorSmartphone,
   NotebookPen,
   PackageOpen,
-  Percent,
   Receipt,
-  Route,
-  ShieldCheck,
   ShieldPlus,
   Stethoscope,
   StickyNote,
   TestTubeDiagonal,
-  UserCog,
   UserRound,
   Users,
   Warehouse,
@@ -89,10 +83,12 @@ export const NAV: NavGroup[] = [
       { label: "Gastos", href: "/movimientos/gastos", icon: Receipt, roles: [1, 2, 7], built: true },
       { label: "Otros Ingresos", href: "/movimientos/ingresos", icon: Banknote, roles: [1, 2, 7] },
       { label: "Cuentas por Cobrar", href: "/movimientos/cobrar", icon: HandCoins, roles: [1, 2, 7], built: true },
-      { label: "Historial de Cobros", href: "/movimientos/historial-cobros", icon: History, roles: [1, 2, 7] },
-      { label: "Pagos a Personal", href: "/movimientos/pagos-personal", icon: CreditCard, roles: [1, 2] },
+      // Ocultados temporalmente:
+      // { label: "Historial de Cobros", href: "/movimientos/historial-cobros", icon: History, roles: [1, 2, 7] },
+      // { label: "Pagos a Personal", href: "/movimientos/pagos-personal", icon: CreditCard, roles: [1, 2] },
     ],
   },
+  /* Ocultado temporalmente — las comisiones ahora se registran como Gasto (categoría "Comisión"):
   {
     id: "comisiones",
     label: "Comisiones",
@@ -103,6 +99,7 @@ export const NAV: NavGroup[] = [
       { label: "Pagadas — Profesional", href: "/comisiones/pagadas-profesional", icon: Percent, roles: [1, 2, 11] },
     ],
   },
+  */
   {
     id: "sesiones",
     label: "Sesiones",
@@ -138,6 +135,7 @@ export const NAV: NavGroup[] = [
       { label: "Pacientes por Llamar", href: "/metodos/por-llamar", icon: ShieldPlus, roles: [1, 2, 7, 10] },
     ],
   },
+  /* Ocultado temporalmente:
   {
     id: "visitador",
     label: "Visitador",
@@ -148,6 +146,7 @@ export const NAV: NavGroup[] = [
       { label: "Cumpleaños", href: "/visitador/cumpleanos", icon: Route, roles: [1, 11] },
     ],
   },
+  */
   {
     id: "existencias",
     label: "Existencias",
@@ -162,13 +161,14 @@ export const NAV: NavGroup[] = [
     label: "Reportes",
     items: [
       { label: "Reporte de Ingresos", href: "/reportes/total", icon: BarChartBig, roles: [1, 2], built: true },
-      { label: "Detallado por Sede", href: "/reportes/detallado", icon: BarChartBig, roles: [1, 2] },
+      { label: "Detallado por Sede", href: "/reportes/detallado", icon: BarChartBig, roles: [1, 2], built: true },
       { label: "Detallado Sede C", href: "/reportes/detallado-c", icon: BarChartBig, roles: [1, 12] },
       { label: "Cierre de Caja", href: "/reportes/cierre-caja", icon: BarChartBig, roles: [1, 2, 7], built: true },
       { label: "Historial de Pacientes", href: "/reportes/historial-pacientes", icon: BarChartBig, roles: [1, 2, 7, 10] },
       { label: "Producción", href: "/reportes/produccion", icon: BarChartBig, roles: [1, 2] },
     ],
   },
+  /* Ocultado temporalmente:
   {
     id: "creditos",
     label: "Créditos",
@@ -177,6 +177,7 @@ export const NAV: NavGroup[] = [
       { label: "Créditos C", href: "/creditos/c", icon: CreditCard, roles: [1, 2, 12] },
     ],
   },
+  */
   {
     id: "anotaciones",
     label: "Anotaciones",
@@ -189,7 +190,8 @@ export const NAV: NavGroup[] = [
     label: "Administrativo",
     items: [
       { label: "Usuarios", href: "/administrativo/usuarios", icon: Users, roles: [1] },
-      { label: "Roles", href: "/administrativo/roles", icon: ShieldCheck, roles: [1] },
+      // Ocultado temporalmente:
+      // { label: "Roles", href: "/administrativo/roles", icon: ShieldCheck, roles: [1] },
       { label: "Activos", href: "/administrativo/activos", icon: MonitorSmartphone, roles: [1] },
       { label: "Cambiar Contraseña", href: "/administrativo/contrasena", icon: KeyRound, roles: ALL },
     ],
