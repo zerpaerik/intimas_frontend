@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Ban, CalendarDays, MoreHorizontal, Pencil, Plus, Receipt, Search, TriangleAlert } from "lucide-react";
+import { Ban, CalendarDays, MoreHorizontal, Pencil, Plus, Printer, Receipt, Search, TriangleAlert } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -154,22 +154,27 @@ export function GastosList() {
                       {g.anulada ? <span className="text-muted-foreground line-through">{formatPEN(Number(g.monto))}</span> : formatPEN(Number(g.monto))}
                     </TableCell>
                     <TableCell className="text-right">
-                      {!g.anulada && (
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8"><MoreHorizontal className="h-4 w-4" /></Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => router.push(`/movimientos/gastos/${g.id}/editar`)}>
-                              <Pencil className="h-4 w-4" />Editar
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem variant="destructive" onClick={() => setAnularTarget(g)}>
-                              <Ban className="h-4 w-4" />Anular
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      )}
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-8 w-8"><MoreHorizontal className="h-4 w-4" /></Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => window.open(`/comprobante-gasto/${g.id}`, "_blank")}>
+                            <Printer className="h-4 w-4" />Comprobante
+                          </DropdownMenuItem>
+                          {!g.anulada && (
+                            <>
+                              <DropdownMenuItem onClick={() => router.push(`/movimientos/gastos/${g.id}/editar`)}>
+                                <Pencil className="h-4 w-4" />Editar
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem variant="destructive" onClick={() => setAnularTarget(g)}>
+                                <Ban className="h-4 w-4" />Anular
+                              </DropdownMenuItem>
+                            </>
+                          )}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </TableCell>
                   </TableRow>
                 );
