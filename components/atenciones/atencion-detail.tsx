@@ -3,7 +3,6 @@
 import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { toast } from "sonner";
 import { ArrowLeft, Ban, HandCoins, Pencil, Printer, ShieldAlert } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
@@ -56,7 +55,7 @@ export function AtencionDetail({ id }: { id: number }) {
             <Button variant="outline" onClick={() => router.push("/movimientos/atenciones")}>
               <ArrowLeft className="h-4 w-4" /><span className="hidden sm:inline">Volver</span>
             </Button>
-            <Button variant="outline" onClick={() => toast.info("Impresión de ticket disponible en la versión final.")}>
+            <Button variant="outline" onClick={() => window.open(`/comprobante/${id}`, "_blank")}>
               <Printer className="h-4 w-4" /><span className="hidden sm:inline">Ticket</span>
             </Button>
             {atencion && !anulada && (

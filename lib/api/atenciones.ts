@@ -48,6 +48,8 @@ export interface Atencion {
   motivoAnulacion?: string | null;
   anuladaPor?: { id: number; nombre: string } | null;
   usuario?: { id: number; nombre: string } | null;
+  sedeId?: number | null;
+  sede?: { id: number; nombre: string } | null;
   items: AtnItem[];
   consultas?: AtnConsulta[];
 }
