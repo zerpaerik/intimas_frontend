@@ -2,17 +2,12 @@ import {
   Activity,
   BarChartBig,
   Banknote,
-  Boxes,
-  Building2,
-  CalendarClock,
   ClipboardPlus,
   Contact,
-  Droplets,
   FileCheck2,
   HandCoins,
   KeyRound,
   LayoutDashboard,
-  Microscope,
   MonitorSmartphone,
   NotebookPen,
   PackageOpen,
@@ -67,13 +62,14 @@ export const NAV: NavGroup[] = [
       { label: "Profesionales", href: "/archivos/profesionales", icon: Stethoscope, roles: [1], built: true },
       { label: "Servicios", href: "/archivos/servicios", icon: Activity, roles: [1], built: true },
       { label: "Análisis", href: "/archivos/analisis", icon: TestTubeDiagonal, roles: [1], built: true },
-      { label: "Laboratorios", href: "/archivos/laboratorio", icon: Microscope, roles: [1], built: true },
       { label: "Paquetes", href: "/archivos/paquetes", icon: PackageOpen, roles: [1], built: true },
       { label: "Personal", href: "/archivos/personal", icon: Contact, roles: [1], built: true },
-      { label: "Centros", href: "/archivos/centros", icon: Building2, roles: [1], built: true },
-      { label: "Productos", href: "/archivos/productos", icon: Boxes, roles: [1], built: true },
-      { label: "Material", href: "/archivos/material", icon: Droplets, roles: [1], built: true },
       { label: "Tipos de Consulta", href: "/archivos/tipos-consulta", icon: NotebookPen, roles: [1], built: true },
+      // Ocultados temporalmente:
+      // { label: "Laboratorios", href: "/archivos/laboratorio", icon: Microscope, roles: [1] },
+      // { label: "Centros", href: "/archivos/centros", icon: Building2, roles: [1] },
+      // { label: "Productos", href: "/archivos/productos", icon: Boxes, roles: [1] },
+      // { label: "Material", href: "/archivos/material", icon: Droplets, roles: [1] },
     ],
   },
   {
@@ -101,6 +97,7 @@ export const NAV: NavGroup[] = [
     ],
   },
   */
+  /* Ocultado temporalmente:
   {
     id: "sesiones",
     label: "Sesiones",
@@ -109,6 +106,7 @@ export const NAV: NavGroup[] = [
       { label: "Atendidos", href: "/sesiones/atendidos", icon: CalendarClock, roles: [1, 2, 7, 10] },
     ],
   },
+  */
   {
     id: "resultados",
     label: "Resultados",
@@ -163,7 +161,7 @@ export const NAV: NavGroup[] = [
     items: [
       { label: "Reporte de Ingresos", href: "/reportes/total", icon: BarChartBig, roles: [1, 2], built: true },
       { label: "Detallado por Sede", href: "/reportes/detallado", icon: BarChartBig, roles: [1, 2], built: true },
-      { label: "Detallado Sede C", href: "/reportes/detallado-c", icon: BarChartBig, roles: [1, 12] },
+      // { label: "Detallado Sede C", href: "/reportes/detallado-c", icon: BarChartBig, roles: [1, 12] },
       { label: "Cierre de Caja", href: "/reportes/cierre-caja", icon: BarChartBig, roles: [1, 2, 7], built: true },
       { label: "Historial de Pacientes", href: "/reportes/historial-pacientes", icon: BarChartBig, roles: [1, 2, 7, 10] },
       { label: "Producción", href: "/reportes/produccion", icon: BarChartBig, roles: [1, 2] },
