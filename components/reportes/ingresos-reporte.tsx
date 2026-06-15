@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { CalendarDays, TrendingUp, TriangleAlert, Wallet } from "lucide-react";
+import { CalendarDays, FileDown, TrendingUp, TriangleAlert, Wallet } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -59,7 +59,15 @@ export function IngresosReporte() {
         Reportes <span className="px-1">›</span>
         <span className="text-foreground">Reporte de Ingresos</span>
       </p>
-      <PageHeader title="Reporte de ingresos" description="Ingresos por método de pago en un rango de fechas." />
+      <PageHeader
+        title="Reporte de ingresos"
+        description="Ingresos por método de pago en un rango de fechas."
+        actions={
+          <Button variant="outline" onClick={() => window.open(`/reporte-pdf/ingresos?desde=${desde}&hasta=${hasta}`, "_blank")}>
+            <FileDown className="h-4 w-4" /> PDF
+          </Button>
+        }
+      />
 
       <div className="mb-5 flex flex-wrap items-end gap-3 rounded-2xl border bg-card p-3">
         <div className="space-y-1">

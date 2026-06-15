@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Building2, CalendarDays, Layers, TriangleAlert } from "lucide-react";
+import { Building2, CalendarDays, FileDown, Layers, TriangleAlert } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -78,7 +78,15 @@ export function ReporteDetallado() {
         Reportes <span className="px-1">›</span>
         <span className="text-foreground">Detallado por Sede</span>
       </p>
-      <PageHeader title="Detallado por sede" description="Servicios prestados por tipo, con paciente, método de pago y sede." />
+      <PageHeader
+        title="Detallado por sede"
+        description="Servicios prestados por tipo, con paciente, método de pago y sede."
+        actions={
+          <Button variant="outline" onClick={() => window.open(`/reporte-pdf/detallado?desde=${desde}&hasta=${hasta}${sede !== "all" ? `&sedeId=${sede}` : ""}`, "_blank")}>
+            <FileDown className="h-4 w-4" /> PDF
+          </Button>
+        }
+      />
 
       <div className="mb-5 flex flex-wrap items-end gap-3 rounded-2xl border bg-card p-3">
         <div className="space-y-1">
