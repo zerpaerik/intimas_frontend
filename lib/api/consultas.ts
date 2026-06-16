@@ -1,4 +1,4 @@
-/** Tipos de la API clínica: consultas, historias y controles prenatales. */
+/** Tipos de la API clínica: consultas, historias (formato Intimas) y controles prenatales. */
 
 export type ConsultaEstado = "Pendiente" | "Atendida";
 
@@ -6,9 +6,21 @@ export interface ConsultaPaciente {
   id: number;
   nombres: string;
   apellidos: string;
+  tipoDoc?: string | null;
   numDoc?: string | null;
   sexo?: string | null;
   fechaNacimiento?: string | null;
+  telefono?: string | null;
+  facebook?: string | null;
+  // Antecedentes reutilizables
+  antPersonales?: string | null;
+  antFamiliares?: string | null;
+  antEpidemiologicos?: string | null;
+  antQuirurgicos?: string | null;
+  antOtros?: string | null;
+  familiarNombre?: string | null;
+  familiarParentesco?: string | null;
+  familiarDni?: string | null;
 }
 
 export interface ConsultaEspecialista {
@@ -16,6 +28,25 @@ export interface ConsultaEspecialista {
   nombres: string;
   apellidos: string;
   especialidad?: string | null;
+  cmp?: string | null;
+  consultorio?: string | null;
+  turno?: string | null;
+  codigoSalud?: string | null;
+}
+
+export interface Diagnostico {
+  id?: number;
+  cie10: string;
+  descripcion?: string | null;
+}
+
+export interface Tratamiento {
+  id?: number;
+  medicamento: string;
+  presentacion?: string | null;
+  cantidad?: string | null;
+  dosis?: string | null;
+  dias?: string | null;
 }
 
 export interface HistoriaClinica {
@@ -24,39 +55,86 @@ export interface HistoriaClinica {
   pacienteId: number;
   especialistaId?: number | null;
   fecha: string;
-  motivo?: string | null;
-  presionArterial?: string | null;
-  pulso?: string | null;
-  temperatura?: string | null;
+  enfInicio?: string | null;
+  enfCurso?: string | null;
+  enfRelato?: string | null;
   peso?: string | null;
+  fc?: string | null;
+  fr?: string | null;
+  presionArterial?: string | null;
   talla?: string | null;
-  examenFisico?: string | null;
-  diagnosticoPresuntivo?: string | null;
-  diagnosticoDefinitivo?: string | null;
-  cie?: string | null;
-  plan?: string | null;
+  temperatura?: string | null;
+  examenGeneral?: string | null;
+  procedimientos?: string | null;
   observaciones?: string | null;
-  proximaCita?: string | null;
+  diagnosticos?: Diagnostico[];
+  tratamientos?: Tratamiento[];
 }
 
 export interface ControlPrenatal {
   id: number;
   consultaId: number;
+  gestacionId?: number | null;
   pacienteId: number;
   especialistaId?: number | null;
   fecha: string;
   semanaGestacional?: number | null;
   peso?: string | null;
+  temperatura?: string | null;
   presionArterial?: string | null;
-  fcf?: string | null;
+  pulso?: string | null;
   alturaUterina?: string | null;
+  presentacion?: string | null;
+  fcf?: string | null;
   movimientosFetales?: string | null;
   edema?: string | null;
+  consejeria?: string | null;
+  sulfatoFerroso?: string | null;
+  perfilBiofisico?: string | null;
+  serologia?: string | null;
+  glucosa?: string | null;
+  vih?: string | null;
+  hemoglobina?: string | null;
   examenFisico?: string | null;
   diagnostico?: string | null;
+  diagDefinitivo?: string | null;
+  exAux?: string | null;
   plan?: string | null;
   proximaCita?: string | null;
   observaciones?: string | null;
+}
+
+export interface Gestacion {
+  id: number;
+  pacienteId: number;
+  estado: string;
+  gestas?: number | null;
+  partos?: number | null;
+  abortos?: number | null;
+  cesareas?: number | null;
+  vaginales?: number | null;
+  nacidosVivos?: number | null;
+  viven?: number | null;
+  nacidosMuertos?: number | null;
+  fum?: string | null;
+  fpp?: string | null;
+  ecoeg?: string | null;
+  tipoSangre?: string | null;
+  factorRh?: string | null;
+  orina?: string | null;
+  urea?: string | null;
+  creatinina?: string | null;
+  bk?: string | null;
+  torch?: string | null;
+  observaciones?: string | null;
+  fechaCierre?: string | null;
+  motivoCierre?: string | null;
+  controles?: ControlPrenatal[];
+}
+
+export interface Carne {
+  gestacion: Gestacion | null;
+  controles: ControlPrenatal[];
 }
 
 export interface Consulta {
@@ -73,19 +151,16 @@ export interface Consulta {
   especialista?: ConsultaEspecialista | null;
   estado: ConsultaEstado;
   historia?: HistoriaClinica | null;
-  control?: ControlPrenatal | null;
+  control?: (ControlPrenatal & { gestacion?: Gestacion | null }) | null;
 }
 
-export interface AntecedenteObstetrico {
-  id?: number;
-  pacienteId: number;
-  gestas?: number | null;
-  partos?: number | null;
-  abortos?: number | null;
-  cesareas?: number | null;
-  hijosVivos?: number | null;
-  fum?: string | null;
-  fpp?: string | null;
-  tipoSangre?: string | null;
-  observaciones?: string | null;
+export interface Cie10 {
+  codigo: string;
+  descripcion: string;
+}
+
+/** ¿La consulta usa el formato/branding de ginecología? */
+export function esGineco(c: { especialidad?: string | null; tipoNombre?: string }): boolean {
+  const s = `${c.especialidad ?? ""} ${c.tipoNombre ?? ""}`.toLowerCase();
+  return s.includes("gineco") || s.includes("obstet") || s.includes("prenatal");
 }

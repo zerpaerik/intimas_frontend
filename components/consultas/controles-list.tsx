@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { Baby, Search, TriangleAlert } from "lucide-react";
+import { Baby, Printer, Search, TriangleAlert } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -66,6 +66,7 @@ export function ControlesList() {
                 <TableHead className="text-xs hidden md:table-cell">FCF</TableHead>
                 <TableHead className="text-xs">Diagnóstico</TableHead>
                 <TableHead className="text-xs hidden lg:table-cell">Especialista</TableHead>
+                <TableHead />
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -86,6 +87,9 @@ export function ControlesList() {
                     <TableCell className="hidden md:table-cell text-muted-foreground">{c.fcf || "—"}</TableCell>
                     <TableCell>{c.diagnostico || "—"}</TableCell>
                     <TableCell className="hidden lg:table-cell text-muted-foreground">{esp}</TableCell>
+                    <TableCell className="text-right" onClick={(ev) => ev.stopPropagation()}>
+                      <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={() => window.open(`/comprobante-control/${c.consultaId}`, "_blank")} aria-label="Imprimir carné"><Printer className="h-4 w-4" /></Button>
+                    </TableCell>
                   </TableRow>
                 );
               })}

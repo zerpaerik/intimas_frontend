@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { FileText, Search, TriangleAlert } from "lucide-react";
+import { Printer, Search, TriangleAlert } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -62,9 +62,10 @@ export function HistoriasList() {
               <TableRow className="hover:bg-transparent">
                 <TableHead className="text-xs">Fecha</TableHead>
                 <TableHead className="text-xs">Paciente</TableHead>
-                <TableHead className="text-xs hidden md:table-cell">Motivo</TableHead>
+                <TableHead className="text-xs hidden md:table-cell">Relato</TableHead>
                 <TableHead className="text-xs">Diagnóstico</TableHead>
                 <TableHead className="text-xs hidden lg:table-cell">Especialista</TableHead>
+                <TableHead />
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -81,9 +82,12 @@ export function HistoriasList() {
                         <span className="font-medium">{nombre}</span>
                       </div>
                     </TableCell>
-                    <TableCell className="hidden md:table-cell text-muted-foreground">{h.motivo || "—"}</TableCell>
-                    <TableCell>{h.diagnosticoDefinitivo || h.diagnosticoPresuntivo || "—"}</TableCell>
+                    <TableCell className="hidden md:table-cell text-muted-foreground max-w-[16rem] truncate">{h.enfRelato || "—"}</TableCell>
+                    <TableCell>{h.diagnosticos?.[0] ? `${h.diagnosticos[0].cie10}${h.diagnosticos[0].descripcion ? " · " + h.diagnosticos[0].descripcion : ""}` : "—"}</TableCell>
                     <TableCell className="hidden lg:table-cell text-muted-foreground">{esp}</TableCell>
+                    <TableCell className="text-right" onClick={(ev) => ev.stopPropagation()}>
+                      <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={() => window.open(`/comprobante-historia/${h.consultaId}`, "_blank")} aria-label="Imprimir"><Printer className="h-4 w-4" /></Button>
+                    </TableCell>
                   </TableRow>
                 );
               })}
