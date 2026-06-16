@@ -24,6 +24,7 @@ import { useApiItem, useApiList } from "@/lib/api/hooks";
 import { type Carne, type Consulta } from "@/lib/api/consultas";
 import type { Row } from "@/lib/resources/types";
 import { HistoriaForm } from "./historia-form";
+import { HistorialClinicoPanel } from "./historial-clinico-panel";
 
 const s = (x: unknown) => (x == null ? "" : String(x));
 const d10 = (x: unknown) => (x ? String(x).slice(0, 10) : "");
@@ -115,7 +116,7 @@ function ControlForm({ consulta }: { consulta: Consulta }) {
         especialistaId: especialistaId ? Number(especialistaId) : undefined,
       });
       toast.success("Control prenatal guardado");
-      router.push(`/comprobante-control/${consulta.id}`);
+      router.push("/consultas/lista");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "No se pudo guardar");
       setSaving(false);
@@ -136,7 +137,7 @@ function ControlForm({ consulta }: { consulta: Consulta }) {
   }
 
   return (
-    <div className="mx-auto max-w-4xl">
+    <div className="mx-auto max-w-6xl">
       <p className="mb-2 text-sm text-muted-foreground">
         Consultas <span className="px-1">›</span>
         <button onClick={() => router.push("/consultas/lista")} className="hover:text-foreground">Lista</button>
@@ -170,7 +171,8 @@ function ControlForm({ consulta }: { consulta: Consulta }) {
         </CardContent>
       </Card>
 
-      <div className="space-y-4">
+      <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
+        <div className="space-y-4">
         {/* Antecedentes obstétricos (gestación) */}
         <Card>
           <CardHeader><CardTitle className="flex items-center gap-2"><Baby className="h-4 w-4 text-brand" /> Antecedentes obstétricos</CardTitle></CardHeader>
@@ -291,6 +293,10 @@ function ControlForm({ consulta }: { consulta: Consulta }) {
             </div>
           </CardContent>
         </Card>
+        </div>
+        <div className="lg:sticky lg:top-20 lg:self-start">
+          <HistorialClinicoPanel pacienteId={consulta.pacienteId} excludeConsultaId={consulta.id} />
+        </div>
       </div>
     </div>
   );

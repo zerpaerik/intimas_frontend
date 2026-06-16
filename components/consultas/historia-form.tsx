@@ -20,6 +20,7 @@ import { useApiList } from "@/lib/api/hooks";
 import { esGineco, type Consulta } from "@/lib/api/consultas";
 import type { Row } from "@/lib/resources/types";
 import { Cie10Search } from "./cie10-search";
+import { HistorialClinicoPanel } from "./historial-clinico-panel";
 
 const v = (x: unknown) => (x == null ? "" : String(x));
 
@@ -88,7 +89,7 @@ export function HistoriaForm({ consulta }: { consulta: Consulta }) {
         especialistaId: especialistaId ? Number(especialistaId) : undefined,
       });
       toast.success("Historia clínica guardada");
-      router.push(`/comprobante-historia/${consulta.id}`);
+      router.push("/consultas/lista");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "No se pudo guardar");
       setSaving(false);
@@ -96,7 +97,7 @@ export function HistoriaForm({ consulta }: { consulta: Consulta }) {
   }
 
   return (
-    <div className="mx-auto max-w-4xl">
+    <div className="mx-auto max-w-6xl">
       <p className="mb-2 text-sm text-muted-foreground">
         Consultas <span className="px-1">›</span>
         <button onClick={() => router.push("/consultas/lista")} className="hover:text-foreground">Lista</button>
@@ -138,7 +139,8 @@ export function HistoriaForm({ consulta }: { consulta: Consulta }) {
         </CardContent>
       </Card>
 
-      <div className="space-y-4">
+      <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
+        <div className="space-y-4">
         {/* Familiar + Facebook */}
         <Card>
           <CardHeader><CardTitle>Familiar / contacto</CardTitle></CardHeader>
@@ -270,6 +272,10 @@ export function HistoriaForm({ consulta }: { consulta: Consulta }) {
           <Button className="bg-brand-gradient text-white" onClick={guardar} disabled={saving}>
             {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />} Guardar historia
           </Button>
+        </div>
+        </div>
+        <div className="lg:sticky lg:top-20 lg:self-start">
+          <HistorialClinicoPanel pacienteId={consulta.pacienteId} excludeConsultaId={consulta.id} />
         </div>
       </div>
     </div>
