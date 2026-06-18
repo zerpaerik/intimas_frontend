@@ -45,6 +45,7 @@ interface LineItem {
   esConsulta?: boolean;
   tipoConsultaId?: number;
   prenatal?: boolean;
+  pediatrico?: boolean;
   especialidad?: string;
   especialistaId?: number;
 }
@@ -117,6 +118,7 @@ function RegistroForm({ mode, initial }: { mode: "create" | "edit"; initial?: At
         esConsulta: item.tipoConsultaId != null || item.kind === "Consulta",
         tipoConsultaId: item.tipoConsultaId,
         prenatal: item.prenatal,
+        pediatrico: item.pediatrico,
         especialidad: item.especialidad,
       },
     ]);
@@ -170,6 +172,7 @@ function RegistroForm({ mode, initial }: { mode: "create" | "edit"; initial?: At
               tipoNombre: it.nombre,
               especialidad: it.especialidad,
               prenatal: it.prenatal ?? false,
+              pediatrico: it.pediatrico ?? false,
               especialistaId: it.especialistaId,
             })),
         };

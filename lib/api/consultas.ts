@@ -69,6 +69,8 @@ export interface HistoriaClinica {
   observaciones?: string | null;
   diagnosticos?: Diagnostico[];
   tratamientos?: Tratamiento[];
+  cerrada?: boolean;
+  fechaCierre?: string | null;
 }
 
 export interface ControlPrenatal {
@@ -102,6 +104,65 @@ export interface ControlPrenatal {
   plan?: string | null;
   proximaCita?: string | null;
   observaciones?: string | null;
+  cerrada?: boolean;
+  fechaCierre?: string | null;
+}
+
+export interface HistoriaPediatrica {
+  id: number;
+  consultaId: number;
+  pacienteId: number;
+  especialistaId?: number | null;
+  fecha: string;
+  // 1 · Identificación
+  cama?: string | null;
+  informante?: string | null;
+  lugarNacimiento?: string | null;
+  procedencia?: string | null;
+  seguro?: string | null;
+  madreNombre?: string | null;
+  padreNombre?: string | null;
+  servicioIngreso?: string | null;
+  referido?: string | null;
+  // 2 · Enfermedad actual
+  motivoConsulta?: string | null;
+  tiempoEnfermedad?: string | null;
+  formaInicio?: string | null;
+  relato?: string | null;
+  datosNegativos?: string | null;
+  funcionesBiologicas?: string | null;
+  revisionSistemas?: string | null;
+  // 3 · Antecedentes
+  antPerinatales?: string | null;
+  pesoNacer?: string | null;
+  tallaNacer?: string | null;
+  apgar?: string | null;
+  antNutricionales?: string | null;
+  desarrollo?: string | null;
+  escolaridad?: string | null;
+  inmunizaciones?: string | null;
+  antPatologicos?: string | null;
+  antFamiliares?: string | null;
+  antSocioeconomicos?: string | null;
+  // 7 · Examen físico
+  peso?: string | null;
+  talla?: string | null;
+  pc?: string | null;
+  perimetroAbdominal?: string | null;
+  imc?: string | null;
+  fc?: string | null;
+  fr?: string | null;
+  ta?: string | null;
+  temperatura?: string | null;
+  percentiles?: string | null;
+  inspeccionGeneral?: string | null;
+  // 10-12 · Diagnóstico y planes
+  dxPatologia?: string | null;
+  dxCrecimiento?: string | null;
+  planEstudio?: string | null;
+  planManejo?: string | null;
+  cerrada?: boolean;
+  fechaCierre?: string | null;
 }
 
 export interface Gestacion {
@@ -147,11 +208,13 @@ export interface Consulta {
   tipoNombre: string;
   especialidad?: string | null;
   prenatal: boolean;
+  pediatrico?: boolean;
   especialistaId?: number | null;
   especialista?: ConsultaEspecialista | null;
   estado: ConsultaEstado;
   historia?: HistoriaClinica | null;
   control?: (ControlPrenatal & { gestacion?: Gestacion | null }) | null;
+  pediatrica?: HistoriaPediatrica | null;
 }
 
 export interface Cie10 {

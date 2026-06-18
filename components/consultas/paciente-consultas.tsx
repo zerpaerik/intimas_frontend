@@ -34,7 +34,8 @@ export function PacienteConsultas({ tipo }: { tipo: "historia" | "control" }) {
 
   const nombre = patient ? `${patient.nombres ?? ""} ${patient.apellidos ?? ""}`.trim() : "";
   const edad = patient?.fechaNacimiento ? calcAge(String(patient.fechaNacimiento)) : null;
-  const printBase = esControl ? "/comprobante-control" : "/comprobante-historia";
+  const printHref = (row: Consulta) =>
+    `${row.pediatrico ? "/comprobante-pediatria" : row.prenatal ? "/comprobante-control" : "/comprobante-historia"}/${row.id}`;
 
   return (
     <div>
@@ -102,6 +103,7 @@ export function PacienteConsultas({ tipo }: { tipo: "historia" | "control" }) {
                       <TableCell>
                         <span className="font-medium">{c.tipoNombre}</span>
                         {c.prenatal && <span className="ml-1.5 rounded bg-brand/10 px-1.5 py-0.5 text-[10px] font-medium text-brand">prenatal</span>}
+                        {c.pediatrico && <span className="ml-1.5 rounded bg-sky-100 px-1.5 py-0.5 text-[10px] font-medium text-sky-700">pediátrica</span>}
                       </TableCell>
                       <TableCell className="hidden md:table-cell text-muted-foreground">{esp}</TableCell>
                       <TableCell>
@@ -114,7 +116,7 @@ export function PacienteConsultas({ tipo }: { tipo: "historia" | "control" }) {
                             {atendida ? "Ver" : "Atender"}
                           </Button>
                           {atendida && (
-                            <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={() => window.open(`${printBase}/${c.id}`, "_blank")} aria-label="Imprimir">
+                            <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={() => window.open(printHref(c), "_blank")} aria-label="Imprimir">
                               <Printer className="h-4 w-4" />
                             </Button>
                           )}

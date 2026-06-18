@@ -3,7 +3,7 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { ArrowLeft, Loader2, Plus, Printer, Save, Trash2 } from "lucide-react";
+import { ArrowLeft, Lock, Plus, Printer, Trash2 } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,6 +21,7 @@ import { esGineco, type Consulta } from "@/lib/api/consultas";
 import type { Row } from "@/lib/resources/types";
 import { Cie10Search } from "./cie10-search";
 import { HistorialClinicoPanel } from "./historial-clinico-panel";
+import { AccionesCierre } from "./acciones-cierre";
 
 const v = (x: unknown) => (x == null ? "" : String(x));
 
@@ -42,6 +43,7 @@ export function HistoriaForm({ consulta }: { consulta: Consulta }) {
   const profesionales = useApiList<Row>("/profesionales");
   const h = consulta.historia;
   const p = consulta.paciente;
+  const cerrada = !!h?.cerrada;
 
   const [form, setForm] = React.useState<Record<string, string>>({
     enfInicio: v(h?.enfInicio), enfCurso: v(h?.enfCurso), enfRelato: v(h?.enfRelato),
@@ -70,7 +72,7 @@ export function HistoriaForm({ consulta }: { consulta: Consulta }) {
   const edad = p?.fechaNacimiento ? calcAge(String(p.fechaNacimiento)) : null;
   const esp = profesionales.data.find((x) => String(x.id) === especialistaId);
 
-  async function guardar() {
+  async function guardar(cerrar: boolean) {
     const dx = diags.filter((d) => d.cie10.trim());
     if (dx.length === 0) return toast.error("Agrega al menos un diagnóstico con CIE-10.");
     setSaving(true);
@@ -87,12 +89,23 @@ export function HistoriaForm({ consulta }: { consulta: Consulta }) {
         diagnosticos: dx,
         tratamientos: trats.filter((t) => t.medicamento.trim()),
         especialistaId: especialistaId ? Number(especialistaId) : undefined,
+        cerrar,
       });
-      toast.success("Historia clínica guardada");
+      toast.success(cerrar ? "Historia clínica guardada y cerrada" : "Historia clínica guardada");
       router.push("/consultas/lista");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "No se pudo guardar");
       setSaving(false);
+    }
+  }
+
+  async function reabrir() {
+    try {
+      await api.post(`/consultas/${consulta.id}/reabrir`, {});
+      toast.success("Historia reabierta · ya puedes editarla");
+      window.location.reload();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "No se pudo reabrir");
     }
   }
 
@@ -108,6 +121,11 @@ export function HistoriaForm({ consulta }: { consulta: Consulta }) {
         title="Historia clínica"
         actions={
           <>
+            {cerrada && (
+              <span className="flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700">
+                <Lock className="h-3.5 w-3.5" /> Cerrada
+              </span>
+            )}
             {consulta.estado === "Atendida" && (
               <Button variant="outline" onClick={() => window.open(`/comprobante-historia/${consulta.id}`, "_blank")}>
                 <Printer className="h-4 w-4" /> Imprimir
@@ -140,7 +158,8 @@ export function HistoriaForm({ consulta }: { consulta: Consulta }) {
       </Card>
 
       <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
-        <div className="space-y-4">
+        <div className="space-y-4 min-w-0">
+        <fieldset disabled={cerrada} className="m-0 space-y-4 border-0 p-0">
         {/* Familiar + Facebook */}
         <Card>
           <CardHeader><CardTitle>Familiar / contacto</CardTitle></CardHeader>
@@ -267,11 +286,9 @@ export function HistoriaForm({ consulta }: { consulta: Consulta }) {
           </CardContent>
         </Card>
 
-        <div className="flex justify-end gap-2 pb-6">
-          <Button variant="outline" onClick={() => router.push("/consultas/lista")}>Cancelar</Button>
-          <Button className="bg-brand-gradient text-white" onClick={guardar} disabled={saving}>
-            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />} Guardar historia
-          </Button>
+        </fieldset>
+        <div className="pb-6">
+          <AccionesCierre cerrada={cerrada} fechaCierre={h?.fechaCierre} saving={saving} onGuardar={guardar} onReabrir={reabrir} onCancel={() => router.push("/consultas/lista")} />
         </div>
         </div>
         <div className="lg:sticky lg:top-20 lg:self-start">

@@ -19,6 +19,7 @@ export interface CatalogItem {
   /** Metadatos cuando es una consulta (kind === "Consulta"). */
   tipoConsultaId?: number;
   prenatal?: boolean;
+  pediatrico?: boolean;
   especialidad?: string;
 }
 
@@ -124,6 +125,7 @@ export function ItemPicker({
                   precio: Number(t.precio),
                   tipoConsultaId: Number(t.id),
                   prenatal: Boolean(t.prenatal),
+                  pediatrico: Boolean(t.pediatrico),
                   especialidad: t.especialidad ? String(t.especialidad) : undefined,
                 })
               }

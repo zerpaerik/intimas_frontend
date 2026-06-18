@@ -12,12 +12,12 @@ export const tiposConsulta: ResourceConfig = {
   searchKeys: ["nombre", "especialidad"],
   titleKey: "nombre",
   subtitleKey: "especialidad",
-  derive: (r) => ({ prenatalLabel: r.prenatal ? "Sí" : "No" }),
+  derive: (r) => ({ formato: r.pediatrico ? "Pediátrica" : r.prenatal ? "Prenatal" : "General" }),
   columns: [
     { key: "nombre", header: "Tipo de consulta", type: "primary", subKey: "especialidad" },
     { key: "especialidad", header: "Especialidad", hideOnMobile: true },
     { key: "precio", header: "Precio", type: "currency" },
-    { key: "prenatalLabel", header: "Prenatal", type: "badge", colorMap: { "Sí": "#e6007e", No: "#94a3b8" } },
+    { key: "formato", header: "Formato", type: "badge", colorMap: { Prenatal: "#993556", "Pediátrica": "#0c447c", General: "#94a3b8" } },
   ],
   fields: [
     { name: "nombre", label: "Nombre del tipo", type: "uppercase", required: true, span: 2 },
@@ -34,6 +34,17 @@ export const tiposConsulta: ResourceConfig = {
         { value: "true", label: "Sí (control prenatal)" },
       ],
     },
+    {
+      name: "pediatrico",
+      label: "¿Es historia pediátrica?",
+      type: "select",
+      span: 1,
+      help: "Si es pediátrica, al atender se registra una historia clínica pediátrica (formato de niños).",
+      options: [
+        { value: "false", label: "No" },
+        { value: "true", label: "Sí (historia pediátrica)" },
+      ],
+    },
   ],
   seed: [
     { id: 1, nombre: "Consulta ginecológica", especialidad: "Ginecología", precio: 60, prenatal: false },
@@ -41,5 +52,6 @@ export const tiposConsulta: ResourceConfig = {
     { id: 3, nombre: "Consulta psicológica", especialidad: "Psicología", precio: 120, prenatal: false },
     { id: 4, nombre: "Medicina general", especialidad: "Medicina General", precio: 40, prenatal: false },
     { id: 5, nombre: "Consulta nutricional", especialidad: "Nutrición", precio: 70, prenatal: false },
+    { id: 6, nombre: "Consulta pediátrica", especialidad: "Pediatría", precio: 55, prenatal: false, pediatrico: true },
   ],
 };

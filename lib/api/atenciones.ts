@@ -59,6 +59,7 @@ export interface AtnConsulta {
   tipoNombre: string;
   estado: string;
   prenatal: boolean;
+  pediatrico?: boolean;
   especialista?: { id: number; nombres: string; apellidos: string } | null;
   historia?: { id: number } | null;
   control?: { id: number } | null;

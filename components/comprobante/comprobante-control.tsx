@@ -25,9 +25,9 @@ function Sec({ title, children }: { title: string; children: React.ReactNode }) 
 }
 function Field({ label, value }: { label: string; value?: string | null }) {
   return (
-    <div style={{ minWidth: 90 }}>
+    <div style={{ minWidth: 0 }}>
       <div style={{ fontSize: 10, color: "#8a8088", textTransform: "uppercase" }}>{label}</div>
-      <div style={{ fontSize: 13 }}>{value || "—"}</div>
+      <div style={{ fontSize: 13, whiteSpace: "pre-wrap", overflowWrap: "anywhere", wordBreak: "break-word" }}>{value || "—"}</div>
     </div>
   );
 }
@@ -57,7 +57,7 @@ export function ComprobanteControl({ id }: { id: number }) {
   const ultimo = controles[controles.length - 1];
 
   return (
-    <div className="min-h-screen bg-slate-100 py-8 print:bg-white print:py-0" style={{ color: "#2c2c2a" }}>
+    <div className="min-h-screen bg-slate-100 py-8 print:bg-white print:py-0" style={{ color: "#2c2c2a", overflowWrap: "anywhere", wordBreak: "break-word" }}>
       <div className="no-print mx-auto mb-4 flex max-w-[820px] items-center justify-between px-4">
         <Button variant="outline" onClick={() => window.close()}><X className="h-4 w-4" /> Cerrar</Button>
         <Button className="bg-brand-gradient text-white" onClick={() => window.print()}><Printer className="h-4 w-4" /> Imprimir / Guardar PDF</Button>
@@ -122,7 +122,7 @@ export function ComprobanteControl({ id }: { id: number }) {
 
           {ultimo && (
             <Sec title="Último control · diagnóstico y plan">
-              <div style={{ fontSize: 12 }}>
+              <div style={{ fontSize: 12, whiteSpace: "pre-wrap" }}>
                 <div><span style={{ color: "#8a8088" }}>Diagnóstico:</span> {ultimo.diagDefinitivo || ultimo.diagnostico || "—"}</div>
                 <div style={{ marginTop: 4 }}><span style={{ color: "#8a8088" }}>Plan:</span> {ultimo.plan || "—"}</div>
                 {ultimo.proximaCita && <div style={{ marginTop: 4 }}><span style={{ color: "#8a8088" }}>Próxima cita:</span> {ultimo.proximaCita}</div>}

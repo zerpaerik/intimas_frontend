@@ -22,9 +22,9 @@ function Sec({ n, title, accent, children }: { n?: number; title: string; accent
 }
 function Field({ label, value, w }: { label: string; value?: string | null; w?: string }) {
   return (
-    <div style={{ flex: w ? `0 0 ${w}` : "1", minWidth: 90 }}>
+    <div style={{ flex: w ? `0 0 ${w}` : "1", minWidth: 0 }}>
       <div style={{ fontSize: 10, color: "#8a8088", textTransform: "uppercase" }}>{label}</div>
-      <div style={{ fontSize: 13, minHeight: 18 }}>{value || "—"}</div>
+      <div style={{ fontSize: 13, minHeight: 18, whiteSpace: "pre-wrap", overflowWrap: "anywhere", wordBreak: "break-word" }}>{value || "—"}</div>
     </div>
   );
 }
@@ -53,7 +53,7 @@ export function ComprobanteHistoria({ id }: { id: number }) {
   const edad = p?.fechaNacimiento ? calcAge(String(p.fechaNacimiento)) : null;
 
   return (
-    <div className="min-h-screen bg-slate-100 py-8 print:bg-white print:py-0" style={{ color: "#2c2c2a" }}>
+    <div className="min-h-screen bg-slate-100 py-8 print:bg-white print:py-0" style={{ color: "#2c2c2a", overflowWrap: "anywhere", wordBreak: "break-word" }}>
       <div className="no-print mx-auto mb-4 flex max-w-[820px] items-center justify-between px-4">
         <Button variant="outline" onClick={() => window.close()}><X className="h-4 w-4" /> Cerrar</Button>
         <Button className="bg-brand-gradient text-white" onClick={() => window.print()}><Printer className="h-4 w-4" /> Imprimir / Guardar PDF</Button>
@@ -137,7 +137,7 @@ export function ComprobanteHistoria({ id }: { id: number }) {
 
           {/* 6 Procedimientos */}
           <Sec n={6} title="Procedimientos · exámenes aux. · intervenciones" accent={accent}>
-            <div style={{ fontSize: 13, minHeight: 18 }}>{h.procedimientos || "—"}</div>
+            <div style={{ fontSize: 13, minHeight: 18, whiteSpace: "pre-wrap" }}>{h.procedimientos || "—"}</div>
           </Sec>
 
           {/* 7 Tratamiento */}
@@ -160,7 +160,7 @@ export function ComprobanteHistoria({ id }: { id: number }) {
 
           {/* 8 Observaciones */}
           <Sec n={8} title="Observaciones (referencia · próxima cita · interconsulta)" accent={accent}>
-            <div style={{ fontSize: 13, minHeight: 18 }}>{h.observaciones || "—"}</div>
+            <div style={{ fontSize: 13, minHeight: 18, whiteSpace: "pre-wrap" }}>{h.observaciones || "—"}</div>
           </Sec>
 
           {/* Datos del profesional */}

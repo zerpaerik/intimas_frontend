@@ -1,14 +1,15 @@
 "use client";
 
 import * as React from "react";
-import { Baby, FileText, Printer } from "lucide-react";
+import { Baby, FileText, Printer, Stethoscope } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatDate } from "@/lib/format";
 import { useApiList } from "@/lib/api/hooks";
-import type { ControlPrenatal, Diagnostico, HistoriaClinica } from "@/lib/api/consultas";
+import type { ControlPrenatal, Diagnostico, HistoriaClinica, HistoriaPediatrica } from "@/lib/api/consultas";
 
 type HRow = HistoriaClinica & { diagnosticos?: Diagnostico[] };
 type CRow = ControlPrenatal;
+type PRow = HistoriaPediatrica;
 
 /** Historial clínico previo del paciente (historias + controles), con enlace a imprimir. */
 export function HistorialClinicoPanel({
@@ -22,7 +23,8 @@ export function HistorialClinicoPanel({
 }) {
   const historias = useApiList<HRow>(pacienteId ? `/consultas/historias?pacienteId=${pacienteId}` : null);
   const controles = useApiList<CRow>(pacienteId ? `/consultas/controles?pacienteId=${pacienteId}` : null);
-  const loading = historias.loading || controles.loading;
+  const pediatricas = useApiList<PRow>(pacienteId ? `/consultas/pediatricas?pacienteId=${pacienteId}` : null);
+  const loading = historias.loading || controles.loading || pediatricas.loading;
 
   const items = React.useMemo(() => {
     const hs = historias.data.map((h) => ({
@@ -39,10 +41,17 @@ export function HistorialClinicoPanel({
       label: `${c.semanaGestacional != null ? `${c.semanaGestacional} sem · ` : ""}${c.diagnostico ?? "Control prenatal"}`,
       href: `/comprobante-control/${c.consultaId}`,
     }));
-    return [...hs, ...cs]
+    const ps = pediatricas.data.map((pe) => ({
+      kind: "Pediátrica" as const,
+      fecha: pe.fecha,
+      consultaId: pe.consultaId,
+      label: pe.dxPatologia ? pe.dxPatologia.split("\n")[0] : (pe.motivoConsulta ?? "Historia pediátrica"),
+      href: `/comprobante-pediatria/${pe.consultaId}`,
+    }));
+    return [...hs, ...cs, ...ps]
       .filter((x) => x.consultaId !== excludeConsultaId)
       .sort((a, b) => +new Date(b.fecha) - +new Date(a.fecha));
-  }, [historias.data, controles.data, excludeConsultaId]);
+  }, [historias.data, controles.data, pediatricas.data, excludeConsultaId]);
 
   return (
     <div className="overflow-hidden rounded-2xl border bg-card">
@@ -58,7 +67,7 @@ export function HistorialClinicoPanel({
         <ol className="max-h-[30rem] divide-y overflow-auto">
           {items.map((x, i) => (
             <li key={i} className="flex items-start gap-2 p-3 text-sm">
-              <span className="mt-0.5 shrink-0 text-muted-foreground">{x.kind === "Control" ? <Baby className="h-4 w-4" /> : <FileText className="h-4 w-4" />}</span>
+              <span className="mt-0.5 shrink-0 text-muted-foreground">{x.kind === "Control" ? <Baby className="h-4 w-4" /> : x.kind === "Pediátrica" ? <Stethoscope className="h-4 w-4" /> : <FileText className="h-4 w-4" />}</span>
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-1.5">
                   <span className="text-xs text-muted-foreground">{formatDate(x.fecha)}</span>

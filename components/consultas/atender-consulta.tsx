@@ -3,7 +3,7 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { ArrowLeft, Baby, Flag, Loader2, Printer, Save, Stethoscope } from "lucide-react";
+import { ArrowLeft, Baby, Flag, Lock, Printer, Stethoscope } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,7 +24,9 @@ import { useApiItem, useApiList } from "@/lib/api/hooks";
 import { type Carne, type Consulta } from "@/lib/api/consultas";
 import type { Row } from "@/lib/resources/types";
 import { HistoriaForm } from "./historia-form";
+import { PediatriaForm } from "./pediatria-form";
 import { HistorialClinicoPanel } from "./historial-clinico-panel";
+import { AccionesCierre } from "./acciones-cierre";
 
 const s = (x: unknown) => (x == null ? "" : String(x));
 const d10 = (x: unknown) => (x ? String(x).slice(0, 10) : "");
@@ -54,6 +56,7 @@ function ControlForm({ consulta }: { consulta: Consulta }) {
   const profesionales = useApiList<Row>("/profesionales");
   const { data: carne, loading: carneLoading } = useApiItem<Carne>(`/consultas/carne/${consulta.pacienteId}`);
   const cc = consulta.control;
+  const cerrada = !!cc?.cerrada;
 
   const [gest, setGest] = React.useState<Record<string, string>>({});
   const [ctrl, setCtrl] = React.useState<Record<string, string>>({
@@ -95,7 +98,7 @@ function ControlForm({ consulta }: { consulta: Consulta }) {
 
   function intOrU(x: string) { return x ? Number(x) : undefined; }
 
-  async function guardar() {
+  async function guardar(cerrar: boolean) {
     setSaving(true);
     try {
       await api.post(`/consultas/${consulta.id}/control`, {
@@ -114,8 +117,9 @@ function ControlForm({ consulta }: { consulta: Consulta }) {
         examenFisico: g("examenFisico") || undefined, diagnostico: g("diagnostico") || undefined, diagDefinitivo: g("diagDefinitivo") || undefined,
         exAux: g("exAux") || undefined, plan: g("plan") || undefined, proximaCita: g("proximaCita") || undefined, observaciones: g("observaciones") || undefined,
         especialistaId: especialistaId ? Number(especialistaId) : undefined,
+        cerrar,
       });
-      toast.success("Control prenatal guardado");
+      toast.success(cerrar ? "Control prenatal guardado y cerrado" : "Control prenatal guardado");
       router.push("/consultas/lista");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "No se pudo guardar");
@@ -136,6 +140,16 @@ function ControlForm({ consulta }: { consulta: Consulta }) {
     }
   }
 
+  async function reabrir() {
+    try {
+      await api.post(`/consultas/${consulta.id}/reabrir`, {});
+      toast.success("Control reabierto · ya puedes editarlo");
+      window.location.reload();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "No se pudo reabrir");
+    }
+  }
+
   return (
     <div className="mx-auto max-w-6xl">
       <p className="mb-2 text-sm text-muted-foreground">
@@ -148,6 +162,11 @@ function ControlForm({ consulta }: { consulta: Consulta }) {
         title="Control prenatal · carné"
         actions={
           <>
+            {cerrada && (
+              <span className="flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700">
+                <Lock className="h-3.5 w-3.5" /> Cerrado
+              </span>
+            )}
             {gestId && <Button variant="outline" className="text-destructive hover:text-destructive" onClick={terminar}><Flag className="h-4 w-4" /> Terminar controles</Button>}
             {consulta.estado === "Atendida" && <Button variant="outline" onClick={() => window.open(`/comprobante-control/${consulta.id}`, "_blank")}><Printer className="h-4 w-4" /> Imprimir</Button>}
             <Button variant="outline" onClick={() => router.push("/consultas/lista")}><ArrowLeft className="h-4 w-4" /> Volver</Button>
@@ -172,7 +191,8 @@ function ControlForm({ consulta }: { consulta: Consulta }) {
       </Card>
 
       <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
-        <div className="space-y-4">
+        <div className="space-y-4 min-w-0">
+        <fieldset disabled={cerrada} className="m-0 space-y-4 border-0 p-0">
         {/* Antecedentes obstétricos (gestación) */}
         <Card>
           <CardHeader><CardTitle className="flex items-center gap-2"><Baby className="h-4 w-4 text-brand" /> Antecedentes obstétricos</CardTitle></CardHeader>
@@ -284,15 +304,12 @@ function ControlForm({ consulta }: { consulta: Consulta }) {
               </Select>
             </Campo>
             <Campo label="Observaciones" span={2}><Textarea value={g("observaciones")} onChange={(e) => set("observaciones", e.target.value)} rows={2} /></Campo>
-
-            <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => router.push("/consultas/lista")}>Cancelar</Button>
-              <Button className="bg-brand-gradient text-white" onClick={guardar} disabled={saving || carneLoading}>
-                {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />} Guardar control
-              </Button>
-            </div>
           </CardContent>
         </Card>
+        </fieldset>
+        <div className="pb-2">
+          <AccionesCierre cerrada={cerrada} fechaCierre={cc?.fechaCierre} saving={saving || carneLoading} onGuardar={guardar} onReabrir={reabrir} onCancel={() => router.push("/consultas/lista")} />
+        </div>
         </div>
         <div className="lg:sticky lg:top-20 lg:self-start">
           <HistorialClinicoPanel pacienteId={consulta.pacienteId} excludeConsultaId={consulta.id} />
@@ -315,5 +332,11 @@ export function AtenderConsulta({ id }: { id: number }) {
       </div>
     );
   }
-  return consulta.prenatal ? <ControlForm consulta={consulta} /> : <HistoriaForm consulta={consulta} />;
+  return consulta.pediatrico ? (
+    <PediatriaForm consulta={consulta} />
+  ) : consulta.prenatal ? (
+    <ControlForm consulta={consulta} />
+  ) : (
+    <HistoriaForm consulta={consulta} />
+  );
 }
