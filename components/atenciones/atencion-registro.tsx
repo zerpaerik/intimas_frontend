@@ -75,7 +75,9 @@ function RegistroForm({ mode, initial }: { mode: "create" | "edit"; initial?: At
   const [patient, setPatient] = React.useState<Row | null>(
     initial ? ({ ...initial.paciente } as unknown as Row) : null,
   );
-  const [origenTipo, setOrigenTipo] = React.useState(initial?.origenTipo ?? "Personal");
+  const [origenTipo, setOrigenTipo] = React.useState(
+    !initial?.origenTipo || initial.origenTipo === "Personal" || initial.origenTipo === "Interno" ? "Interno" : "Externo",
+  );
   const [origenValor, setOrigenValor] = React.useState(initial?.origenValor ?? "");
   const [items, setItems] = React.useState<LineItem[]>(
     initial ? initial.items.map((it, i) => ({ uid: i + 1, kind: it.kind, nombre: it.nombre, monto: Number(it.monto) })) : [],
@@ -89,11 +91,9 @@ function RegistroForm({ mode, initial }: { mode: "create" | "edit"; initial?: At
   const pagosTouched = React.useRef(false);
 
   const origenOptions =
-    origenTipo === "Personal"
+    origenTipo === "Interno"
       ? personal.data.map((p) => `${p.nombres} ${p.apellidos}`)
-      : origenTipo === "Profesional"
-        ? profesionales.data.map((p) => `${p.nombres} ${p.apellidos}`)
-        : [];
+      : profesionales.data.map((p) => `${p.nombres} ${p.apellidos}`);
 
   const total = items.reduce((a, b) => a + (Number(b.monto) || 0), 0);
   const abonado = mode === "edit"
@@ -223,35 +223,34 @@ function RegistroForm({ mode, initial }: { mode: "create" | "edit"; initial?: At
 
           <Step n={2} title="Origen de la atención" icon={HeartPulse}>
             <div className="flex flex-wrap gap-2">
-              {["Personal", "Profesional", "Particular"].map((t) => (
+              {[
+                { v: "Interno", label: "Interno (Personal)" },
+                { v: "Externo", label: "Externo (Profesional)" },
+              ].map((t) => (
                 <button
-                  key={t}
+                  key={t.v}
                   type="button"
-                  onClick={() => { setOrigenTipo(t); setOrigenValor(""); }}
+                  onClick={() => { setOrigenTipo(t.v); setOrigenValor(""); }}
                   className={cn(
                     "rounded-lg border px-3.5 py-2 text-sm font-medium transition-colors",
-                    origenTipo === t ? "border-brand bg-brand/10 text-brand" : "hover:bg-accent/50",
+                    origenTipo === t.v ? "border-brand bg-brand/10 text-brand" : "hover:bg-accent/50",
                   )}
                 >
-                  {t}
+                  {t.label}
                 </button>
               ))}
             </div>
             <div className="mt-3">
-              {origenTipo === "Particular" ? (
-                <Input value={origenValor} onChange={(e) => setOrigenValor(e.target.value)} placeholder="Nombre del particular / referido" />
-              ) : (
-                <Select value={origenValor} onValueChange={setOrigenValor}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder={`Selecciona ${origenTipo.toLowerCase()}…`} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {origenOptions.map((o) => (
-                      <SelectItem key={o} value={o}>{o}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
+              <Select value={origenValor} onValueChange={setOrigenValor}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder={origenTipo === "Interno" ? "Selecciona del personal…" : "Selecciona profesional…"} />
+                </SelectTrigger>
+                <SelectContent>
+                  {origenOptions.map((o) => (
+                    <SelectItem key={o} value={o}>{o}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </Step>
 
