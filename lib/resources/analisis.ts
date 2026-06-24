@@ -16,7 +16,6 @@ export const analisis: ResourceConfig = {
     { key: "nombre", header: "Análisis", type: "primary", subKey: "material" },
     { key: "precio", header: "Precio", type: "currency" },
     { key: "costo", header: "Costo", type: "currency", hideOnMobile: true },
-    { key: "porcentaje", header: "Margen", type: "percent", hideOnMobile: true },
     { key: "tiempo", header: "Entrega", hideOnMobile: true },
     {
       key: "material",
@@ -36,13 +35,13 @@ export const analisis: ResourceConfig = {
     { name: "nombre", label: "Nombre del análisis", type: "uppercase", required: true, span: 2 },
     { name: "precio", label: "Precio (S/)", type: "currency", required: true, span: 1 },
     { name: "costo", label: "Costo (S/)", type: "currency", span: 1 },
-    { name: "porcentaje", label: "Margen (%)", type: "percent", span: 1 },
     { name: "tiempo", label: "Tiempo de entrega", type: "text", placeholder: "24 h", span: 1 },
     {
       name: "material",
       label: "Material requerido",
       type: "select",
-      span: 2,
+      creatable: true,
+      span: 1,
       options: ["Sangre", "Orina", "Suero", "Hisopado", "Heces", "Otro"].map((v) => ({ value: v, label: v })),
     },
   ],

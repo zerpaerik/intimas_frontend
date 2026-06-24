@@ -60,10 +60,11 @@ export const profesionales: ResourceConfig = {
       label: "Especialidad",
       type: "select",
       required: true,
+      creatable: true,
       span: 1,
       options: ESPECIALIDADES.map((v) => ({ value: v, label: v })),
     },
-    { name: "centroId", label: "Centro", type: "select", optionsFrom: "centros", span: 1 },
+    { name: "centroId", label: "Centro", type: "select", optionsFrom: "centros", creatable: true, span: 1 },
     { name: "telefono", label: "Teléfono", type: "tel", span: 1 },
   ],
   seed: [

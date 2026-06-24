@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
 import { MultiSelect } from "@/components/forms/multi-select";
+import { CreatableCombobox } from "@/components/forms/creatable-combobox";
 import { cn } from "@/lib/utils";
 import { getResource, endpointFor } from "@/lib/resources";
 import type { FieldDef, ResourceConfig, Row, SelectOption } from "@/lib/resources/types";
@@ -75,11 +76,13 @@ function FormInner({
   mode,
   existing,
   optionsData,
+  selfData,
 }: {
   cfg: ResourceConfig;
   mode: "create" | "edit";
   existing?: Row | null;
   optionsData: Record<string, Row[]>;
+  selfData?: Row[];
 }) {
   const router = useRouter();
   const endpoint = `/${endpointFor(cfg.key)}`;
@@ -97,7 +100,6 @@ function FormInner({
   } = useForm({ resolver: zodResolver(schema), defaultValues: defaults });
 
   function resolveOptions(field: FieldDef): SelectOption[] {
-    if (field.options) return field.options;
     if (field.optionsFrom) {
       const rel = getResource(field.optionsFrom);
       const key = rel?.titleKey ?? "nombre";
@@ -106,7 +108,31 @@ function FormInner({
         label: String(r[key]),
       }));
     }
-    return [];
+    const base = field.options ?? [];
+    // Creatable de texto: suma los valores ya usados en el recurso como sugerencias.
+    if (field.creatable && selfData) {
+      const seen = new Set(base.map((o) => o.label.toLowerCase()));
+      const extra: SelectOption[] = [];
+      for (const r of selfData) {
+        const raw = r[field.name];
+        if (raw == null) continue;
+        const s = String(raw).trim();
+        if (s && !seen.has(s.toLowerCase())) { seen.add(s.toLowerCase()); extra.push({ value: s, label: s }); }
+      }
+      return [...base, ...extra];
+    }
+    return base;
+  }
+
+  function makeOnCreate(field: FieldDef) {
+    if (field.optionsFrom) {
+      const ep = `/${endpointFor(field.optionsFrom)}`;
+      return async (label: string): Promise<SelectOption> => {
+        const created = await api.post<Row>(ep, { nombre: label });
+        return { value: String(created.id), label: String((created as { nombre?: string }).nombre ?? label) };
+      };
+    }
+    return async (label: string): Promise<SelectOption> => ({ value: label, label });
   }
 
   async function onSubmit(values: Record<string, unknown>) {
@@ -152,6 +178,18 @@ function FormInner({
                     control={control}
                     name={f.name}
                     render={({ field }) => {
+                      if (f.type === "select" && f.creatable) {
+                        return (
+                          <CreatableCombobox
+                            value={(field.value as string) ?? ""}
+                            onChange={field.onChange}
+                            options={resolveOptions(f)}
+                            placeholder={f.placeholder}
+                            onCreate={makeOnCreate(f)}
+                            invalid={!!err}
+                          />
+                        );
+                      }
                       if (f.type === "select") {
                         const opts = resolveOptions(f);
                         return (
@@ -262,6 +300,10 @@ export function ResourceForm({
   if (optKeys[0]) optionsData[optKeys[0]] = list0.data;
   if (optKeys[1]) optionsData[optKeys[1]] = list1.data;
 
+  // Para los selects "creatable" de texto: sugerimos valores ya usados en el propio recurso.
+  const needsSelf = (cfg?.fields ?? []).some((f) => f.creatable && !f.optionsFrom);
+  const selfList = useApiList<Row>(needsSelf && cfg ? `/${endpointFor(cfg.key)}` : null);
+
   if (!cfg) {
     return <div className="py-20 text-center text-muted-foreground">Recurso no encontrado.</div>;
   }
@@ -311,7 +353,7 @@ export function ResourceForm({
   return (
     <div className="mx-auto max-w-3xl">
       {header}
-      <FormInner cfg={cfg} mode={mode} existing={mode === "edit" ? existing : undefined} optionsData={optionsData} />
+      <FormInner cfg={cfg} mode={mode} existing={mode === "edit" ? existing : undefined} optionsData={optionsData} selfData={selfList.data} />
     </div>
   );
 }

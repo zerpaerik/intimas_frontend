@@ -31,6 +31,8 @@ export interface FieldDef {
   options?: SelectOption[];
   /** Toma las opciones de otro recurso (por su nombre). */
   optionsFrom?: string;
+  /** Permite elegir una opción o crear/escribir una nueva (combobox). */
+  creatable?: boolean;
   /** Ancho en la grilla del formulario. */
   span?: 1 | 2;
   help?: string;
