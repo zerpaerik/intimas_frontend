@@ -20,6 +20,7 @@ export interface CatalogItem {
   tipoConsultaId?: number;
   prenatal?: boolean;
   pediatrico?: boolean;
+  gineco?: boolean;
   especialidad?: string;
 }
 
@@ -126,6 +127,7 @@ export function ItemPicker({
                   tipoConsultaId: Number(t.id),
                   prenatal: Boolean(t.prenatal),
                   pediatrico: Boolean(t.pediatrico),
+                  gineco: Boolean(t.gineco),
                   especialidad: t.especialidad ? String(t.especialidad) : undefined,
                 })
               }

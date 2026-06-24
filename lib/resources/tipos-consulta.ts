@@ -12,12 +12,18 @@ export const tiposConsulta: ResourceConfig = {
   searchKeys: ["nombre", "especialidad"],
   titleKey: "nombre",
   subtitleKey: "especialidad",
-  derive: (r) => ({ formatoLabel: r.formato === "pediatrico" ? "Pediátrica" : r.formato === "prenatal" ? "Prenatal" : "General" }),
+  derive: (r) => ({
+    formatoLabel:
+      r.formato === "pediatrico" ? "Pediátrica"
+      : r.formato === "prenatal" ? "Prenatal"
+      : r.formato === "ginecologica" ? "Ginecológica"
+      : "General",
+  }),
   columns: [
     { key: "nombre", header: "Tipo de consulta", type: "primary", subKey: "especialidad" },
     { key: "especialidad", header: "Especialidad", hideOnMobile: true },
     { key: "precio", header: "Precio", type: "currency" },
-    { key: "formatoLabel", header: "Tipo de historia", type: "badge", colorMap: { Prenatal: "#993556", "Pediátrica": "#0c447c", General: "#94a3b8" } },
+    { key: "formatoLabel", header: "Tipo de historia", type: "badge", colorMap: { "Ginecológica": "#993556", Prenatal: "#d4537e", "Pediátrica": "#0c447c", General: "#94a3b8" } },
   ],
   fields: [
     { name: "nombre", label: "Nombre del tipo", type: "uppercase", required: true, span: 2 },
@@ -31,13 +37,14 @@ export const tiposConsulta: ResourceConfig = {
       help: "Define qué formato se abre al atender esta consulta.",
       options: [
         { value: "general", label: "Historia clínica general" },
+        { value: "ginecologica", label: "Historia ginecológica" },
         { value: "prenatal", label: "Control prenatal (carné)" },
         { value: "pediatrico", label: "Historia pediátrica" },
       ],
     },
   ],
   seed: [
-    { id: 1, nombre: "Consulta ginecológica", especialidad: "Ginecología", precio: 60, formato: "general" },
+    { id: 1, nombre: "Consulta ginecológica", especialidad: "Ginecología", precio: 60, formato: "ginecologica" },
     { id: 2, nombre: "Control prenatal", especialidad: "Obstetricia", precio: 50, formato: "prenatal" },
     { id: 3, nombre: "Consulta psicológica", especialidad: "Psicología", precio: 120, formato: "general" },
     { id: 4, nombre: "Medicina general", especialidad: "Medicina General", precio: 40, formato: "general" },

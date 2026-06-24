@@ -46,6 +46,7 @@ interface LineItem {
   tipoConsultaId?: number;
   prenatal?: boolean;
   pediatrico?: boolean;
+  gineco?: boolean;
   especialidad?: string;
   especialistaId?: number;
 }
@@ -119,6 +120,7 @@ function RegistroForm({ mode, initial }: { mode: "create" | "edit"; initial?: At
         tipoConsultaId: item.tipoConsultaId,
         prenatal: item.prenatal,
         pediatrico: item.pediatrico,
+        gineco: item.gineco,
         especialidad: item.especialidad,
       },
     ]);
@@ -173,6 +175,7 @@ function RegistroForm({ mode, initial }: { mode: "create" | "edit"; initial?: At
               especialidad: it.especialidad,
               prenatal: it.prenatal ?? false,
               pediatrico: it.pediatrico ?? false,
+              gineco: it.gineco ?? false,
               especialistaId: it.especialistaId,
             })),
         };

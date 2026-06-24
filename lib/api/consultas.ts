@@ -209,6 +209,7 @@ export interface Consulta {
   especialidad?: string | null;
   prenatal: boolean;
   pediatrico?: boolean;
+  gineco?: boolean;
   especialistaId?: number | null;
   especialista?: ConsultaEspecialista | null;
   estado: ConsultaEstado;
@@ -223,7 +224,8 @@ export interface Cie10 {
 }
 
 /** ¿La consulta usa el formato/branding de ginecología? */
-export function esGineco(c: { especialidad?: string | null; tipoNombre?: string }): boolean {
+export function esGineco(c: { gineco?: boolean; especialidad?: string | null; tipoNombre?: string }): boolean {
+  if (c.gineco) return true;
   const s = `${c.especialidad ?? ""} ${c.tipoNombre ?? ""}`.toLowerCase();
   return s.includes("gineco") || s.includes("obstet") || s.includes("prenatal");
 }
