@@ -13,6 +13,7 @@ import {
 import { cn } from "@/lib/utils";
 import { formatPEN, formatDate } from "@/lib/format";
 import { useApiItem } from "@/lib/api/hooks";
+import { useSedeFiltro } from "@/lib/auth/store";
 import { METODOS_PAGO } from "@/lib/api/atenciones";
 
 interface PagoRow {
@@ -48,8 +49,9 @@ export function IngresosReporte() {
   const today = localDate();
   const [desde, setDesde] = React.useState(today);
   const [hasta, setHasta] = React.useState(today);
+  const sedeId = useSedeFiltro();
   const { data, loading, error, refetch } = useApiItem<IngresosResponse>(
-    `/reportes/ingresos?desde=${desde}&hasta=${hasta}`,
+    `/reportes/ingresos?desde=${desde}&hasta=${hasta}${sedeId ? `&sedeId=${sedeId}` : ""}`,
   );
   const isHoy = desde === today && hasta === today;
 

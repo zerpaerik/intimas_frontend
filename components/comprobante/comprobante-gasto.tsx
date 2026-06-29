@@ -86,9 +86,9 @@ export function ComprobanteGasto({ id }: { id: number }) {
             <span style={{ fontVariantNumeric: "tabular-nums", fontSize: 16, color: "#dc2626" }}>{formatPEN(Number(g.monto))}</span>
           </div>
 
-          <div style={{ marginTop: 18, textAlign: "center", fontSize: 11, color: "#6b7280" }}>
-            <div style={{ borderTop: "1px solid #6b7280", margin: "0 8mm", paddingTop: 3 }}>Recibí conforme</div>
-            <div style={{ marginTop: 2 }}>Nombre / DNI / Firma</div>
+          <div style={{ marginTop: 42, textAlign: "center", fontSize: 11, color: "#6b7280" }}>
+            <div style={{ borderTop: "1px solid #4b5563", margin: "0 6mm", paddingTop: 3, color: "#1f2937", fontWeight: 600 }}>Recibí conforme</div>
+            <div style={{ marginTop: 2 }}>Nombre · DNI · Firma</div>
           </div>
 
           <Hr />

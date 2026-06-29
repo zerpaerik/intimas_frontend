@@ -80,7 +80,9 @@ function RegistroForm({ mode, initial }: { mode: "create" | "edit"; initial?: At
     initial ? ({ ...initial.paciente } as unknown as Row) : null,
   );
   const [origenTipo, setOrigenTipo] = React.useState(
-    !initial?.origenTipo || initial.origenTipo === "Personal" || initial.origenTipo === "Interno" ? "Interno" : "Externo",
+    initial?.origenTipo === "Particular" ? "Particular"
+      : initial?.origenTipo === "Externo" || initial?.origenTipo === "Profesional" ? "Externo"
+      : "Interno",
   );
   const [origenValor, setOrigenValor] = React.useState(initial?.origenValor ?? "");
   const [items, setItems] = React.useState<LineItem[]>(
@@ -232,6 +234,7 @@ function RegistroForm({ mode, initial }: { mode: "create" | "edit"; initial?: At
               {[
                 { v: "Interno", label: "Interno (Personal)" },
                 { v: "Externo", label: "Externo (Profesional)" },
+                { v: "Particular", label: "Particular" },
               ].map((t) => (
                 <button
                   key={t.v}
@@ -247,16 +250,20 @@ function RegistroForm({ mode, initial }: { mode: "create" | "edit"; initial?: At
               ))}
             </div>
             <div className="mt-3">
-              <Select value={origenValor} onValueChange={setOrigenValor}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder={origenTipo === "Interno" ? "Selecciona del personal…" : "Selecciona profesional…"} />
-                </SelectTrigger>
-                <SelectContent>
-                  {origenOptions.map((o) => (
-                    <SelectItem key={o} value={o}>{o}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              {origenTipo === "Particular" ? (
+                <Input value={origenValor} onChange={(e) => setOrigenValor(e.target.value)} placeholder="Nombre del particular / referido (opcional)" />
+              ) : (
+                <Select value={origenValor} onValueChange={setOrigenValor}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder={origenTipo === "Interno" ? "Selecciona del personal…" : "Selecciona profesional…"} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {origenOptions.map((o) => (
+                      <SelectItem key={o} value={o}>{o}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
             </div>
           </Step>
 
@@ -323,7 +330,7 @@ function RegistroForm({ mode, initial }: { mode: "create" | "edit"; initial?: At
                   <div key={p.uid} className="flex items-center gap-2">
                     <div className="relative flex-1">
                       <span className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">S/</span>
-                      <Input type="number" value={p.monto} onChange={(e) => patchPago(p.uid, { monto: Number(e.target.value) })} className="h-9 pl-7" />
+                      <Input type="number" value={p.monto || ""} onChange={(e) => patchPago(p.uid, { monto: Number(e.target.value) })} className="h-9 pl-7" />
                     </div>
                     <Select value={p.metodo} onValueChange={(v) => patchPago(p.uid, { metodo: v })}>
                       <SelectTrigger className="h-9 w-36"><SelectValue /></SelectTrigger>

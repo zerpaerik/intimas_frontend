@@ -70,4 +70,5 @@ export interface CajaDetalle {
   resumen: CajaResumen;
   pagos: CajaMovPago[];
   gastos: CajaMovGasto[];
+  porTipoServicio?: Record<string, number>;
 }

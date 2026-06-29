@@ -18,6 +18,7 @@ import {
 import { cn } from "@/lib/utils";
 import { formatPEN } from "@/lib/format";
 import { useApiList } from "@/lib/api/hooks";
+import { useSedeFiltro } from "@/lib/auth/store";
 import { type Gasto } from "@/lib/api/gastos";
 import { AnularDialog } from "@/components/atenciones/anular-dialog";
 
@@ -30,7 +31,8 @@ function localDate(d: Date = new Date()) {
 
 export function GastosList() {
   const router = useRouter();
-  const { data: gastos, loading, error, refetch } = useApiList<Gasto>("/gastos");
+  const sedeId = useSedeFiltro();
+  const { data: gastos, loading, error, refetch } = useApiList<Gasto>(`/gastos${sedeId ? `?sedeId=${sedeId}` : ""}`);
 
   const today = localDate();
   const [desde, setDesde] = React.useState(today);

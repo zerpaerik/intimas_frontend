@@ -48,6 +48,7 @@ export function ComprobanteCaja({ id }: { id: number }) {
   }
 
   const { caja, resumen, pagos, gastos } = data;
+  const porTipo = Object.entries(data.porTipoServicio ?? {}).sort((a, b) => b[1] - a[1]);
   const arqueo = caja.arqueo;
   const cerrada = caja.estado === "Cerrada";
   const th: React.CSSProperties = { textAlign: "right", padding: "4px 6px", fontSize: 11 };
@@ -116,6 +117,27 @@ export function ComprobanteCaja({ id }: { id: number }) {
               </tbody>
             </table>
           </Sec>
+
+          {/* Por tipo de servicio */}
+          {porTipo.length > 0 && (
+            <Sec title="Por tipo de servicio">
+              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
+                <tbody>
+                  {porTipo.map(([kind, monto]) => (
+                    <tr key={kind} style={{ borderTop: "1px solid #e6ebf1" }}>
+                      <td style={{ padding: "4px 6px" }}>{kind}</td>
+                      <td style={td}>{formatPEN(monto)}</td>
+                    </tr>
+                  ))}
+                  <tr style={{ borderTop: "2px solid #d3dae3", fontWeight: 700 }}>
+                    <td style={{ padding: "4px 6px" }}>Total</td>
+                    <td style={td}>{formatPEN(porTipo.reduce((s, [, m]) => s + m, 0))}</td>
+                  </tr>
+                </tbody>
+              </table>
+              <div style={{ fontSize: 10, color: "#9aa2ad", marginTop: 4 }}>Servicios de las atenciones cobradas en el turno.</div>
+            </Sec>
+          )}
 
           {/* Arqueo (solo cerrada) */}
           {cerrada && arqueo && (

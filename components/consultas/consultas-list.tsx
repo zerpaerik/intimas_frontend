@@ -14,6 +14,7 @@ import {
 import { cn } from "@/lib/utils";
 import { formatDate, initials } from "@/lib/format";
 import { useApiList } from "@/lib/api/hooks";
+import { useSedeFiltro } from "@/lib/auth/store";
 import { type Consulta } from "@/lib/api/consultas";
 
 const ESTADO_COLOR: Record<string, string> = { Pendiente: "#f5a623", Atendida: "#16a34a" };
@@ -25,7 +26,8 @@ function localDate(d: Date = new Date()) {
 
 export function ConsultasList() {
   const router = useRouter();
-  const { data: consultas, loading, error, refetch } = useApiList<Consulta>("/consultas");
+  const sedeId = useSedeFiltro();
+  const { data: consultas, loading, error, refetch } = useApiList<Consulta>(`/consultas${sedeId ? `?sedeId=${sedeId}` : ""}`);
   const today = localDate();
   const [estado, setEstado] = React.useState<"Todas" | "Pendiente" | "Atendida">("Todas");
   const [desde, setDesde] = React.useState(today);

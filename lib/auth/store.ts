@@ -53,6 +53,8 @@ interface AuthState {
   loginAsRole: (roleId: RoleId, sedeId?: number) => Promise<void>;
   switchRole: (roleId: RoleId) => Promise<void>;
   setSede: (sedeId: number) => void;
+  verTodas: boolean;
+  setVerTodas: (v: boolean) => void;
   logout: () => void;
   setHydrated: () => void;
 }
@@ -62,6 +64,7 @@ export const useAuth = create<AuthState>()(
     (set, get) => ({
       session: null,
       hydrated: false,
+      verTodas: false,
 
       loginWithCredentials: async (email, password, sedeId) => {
         const res = await api.post<LoginResponse>("/auth/login", { email, password });
@@ -82,8 +85,9 @@ export const useAuth = create<AuthState>()(
 
       setSede: (sedeId) => {
         const s = get().session;
-        if (s) set({ session: { ...s, sedeId, user: { ...s.user, sedeId } } });
+        if (s) set({ session: { ...s, sedeId, user: { ...s.user, sedeId } }, verTodas: false });
       },
+      setVerTodas: (v) => set({ verTodas: v }),
 
       logout: () => set({ session: null }),
 
@@ -91,7 +95,7 @@ export const useAuth = create<AuthState>()(
     }),
     {
       name: "intimas-session",
-      partialize: (s) => ({ session: s.session }),
+      partialize: (s) => ({ session: s.session, verTodas: s.verTodas }),
       onRehydrateStorage: () => (state) => {
         state?.setHydrated();
       },
@@ -103,4 +107,17 @@ export const useAuth = create<AuthState>()(
 export function useSede(): Sede {
   const sedeId = useAuth((s) => s.session?.sedeId ?? 1);
   return getSede(sedeId);
+}
+
+/** Roles que pueden ver/cambiar todas las sedes (Administrador y Gerente). */
+export function useCanSwitchSede(): boolean {
+  return useAuth((s) => s.session?.roleId === 1 || s.session?.roleId === 12);
+}
+
+/** Sede por la que se filtra todo lo operativo (null = todas las sedes). */
+export function useSedeFiltro(): number | null {
+  return useAuth((s) => {
+    const admin = s.session?.roleId === 1 || s.session?.roleId === 12;
+    return s.verTodas && admin ? null : s.session?.sedeId ?? null;
+  });
 }

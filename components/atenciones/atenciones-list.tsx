@@ -19,7 +19,7 @@ import { cn } from "@/lib/utils";
 import { formatPEN, initials } from "@/lib/format";
 import { useApiList } from "@/lib/api/hooks";
 import { isToday, type Atencion, type AtnEstado } from "@/lib/api/atenciones";
-import { useAuth } from "@/lib/auth/store";
+import { useAuth, useSedeFiltro } from "@/lib/auth/store";
 import { CobroDialog } from "./cobro-dialog";
 import { AnularDialog } from "./anular-dialog";
 
@@ -41,7 +41,8 @@ function localDate(d: Date = new Date()) {
 export function AtencionesList() {
   const router = useRouter();
   const roleId = useAuth((s) => s.session?.roleId ?? 1);
-  const { data: atenciones, loading, error, refetch } = useApiList<Atencion>("/atenciones");
+  const sedeId = useSedeFiltro();
+  const { data: atenciones, loading, error, refetch } = useApiList<Atencion>(`/atenciones${sedeId ? `?sedeId=${sedeId}` : ""}`);
 
   const today = localDate();
   const [desde, setDesde] = React.useState(today);

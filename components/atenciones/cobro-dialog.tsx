@@ -42,7 +42,12 @@ export function CobroDialog({
     setSaving(true);
     try {
       const a = await api.post<Atencion>(`/atenciones/${atencionId}/pagos`, { monto: m, metodo });
-      toast.success(`Cobro registrado · ${formatPEN(m)}`);
+      const cobro = [...a.pagos].filter((p) => p.tipo === "COBRO").sort((x, y) => y.id - x.id)[0];
+      toast.success(`Cobro registrado · ${formatPEN(m)}`, {
+        action: cobro
+          ? { label: "Imprimir recibo", onClick: () => window.open(`/comprobante-cobro/${atencionId}?pago=${cobro.id}`, "_blank") }
+          : undefined,
+      });
       onOpenChange(false);
       onDone?.(a);
     } catch (e) {

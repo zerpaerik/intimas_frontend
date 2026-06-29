@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/table";
 import { formatPEN, formatDate, initials } from "@/lib/format";
 import { useApiItem } from "@/lib/api/hooks";
+import { useSedeFiltro } from "@/lib/auth/store";
 import { CobroDialog } from "@/components/atenciones/cobro-dialog";
 
 interface CxcAtencion {
@@ -30,7 +31,8 @@ interface CxcResponse {
 
 export function CuentasPorCobrar() {
   const router = useRouter();
-  const { data, loading, error, refetch } = useApiItem<CxcResponse>("/reportes/cuentas-por-cobrar");
+  const sedeId = useSedeFiltro();
+  const { data, loading, error, refetch } = useApiItem<CxcResponse>(`/reportes/cuentas-por-cobrar${sedeId ? `?sedeId=${sedeId}` : ""}`);
   const [query, setQuery] = React.useState("");
   const [cobro, setCobro] = React.useState<CxcAtencion | null>(null);
 

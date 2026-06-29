@@ -1,6 +1,6 @@
 "use client";
 
-import { Bell, Building2, Menu } from "lucide-react";
+import { Bell, Building2, Check, ChevronsUpDown, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -13,7 +13,54 @@ import {
 import { ThemeToggle } from "@/components/theme-toggle";
 import { CommandPalette } from "./command-palette";
 import { UserMenu } from "./user-menu";
-import { useSede } from "@/lib/auth/store";
+import { cn } from "@/lib/utils";
+import { useAuth, useCanSwitchSede, useSede } from "@/lib/auth/store";
+import { SEDES } from "@/lib/auth/roles";
+
+function SedeSwitcher() {
+  const canSwitch = useCanSwitchSede();
+  const sede = useSede();
+  const verTodas = useAuth((s) => s.verTodas);
+  const setSede = useAuth((s) => s.setSede);
+  const setVerTodas = useAuth((s) => s.setVerTodas);
+  const label = canSwitch && verTodas ? "Todas las sedes" : sede.name;
+
+  if (!canSwitch) {
+    return (
+      <span className="hidden items-center gap-1.5 rounded-full border bg-muted/40 px-3 py-1.5 text-xs font-medium text-muted-foreground md:inline-flex">
+        <Building2 className="h-3.5 w-3.5 text-brand" />
+        {label}
+      </span>
+    );
+  }
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="outline" size="sm" className="hidden h-8 gap-1.5 rounded-full px-3 text-xs font-medium md:inline-flex">
+          <Building2 className="h-3.5 w-3.5 text-brand" />
+          {label}
+          <ChevronsUpDown className="h-3 w-3 opacity-50" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-52">
+        <DropdownMenuLabel>Sede activa</DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        {SEDES.map((s) => (
+          <DropdownMenuItem key={s.id} onClick={() => setSede(s.id)}>
+            <Check className={cn("h-4 w-4", !verTodas && sede.id === s.id ? "text-brand opacity-100" : "opacity-0")} />
+            {s.name}
+          </DropdownMenuItem>
+        ))}
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={() => setVerTodas(true)}>
+          <Check className={cn("h-4 w-4", verTodas ? "text-brand opacity-100" : "opacity-0")} />
+          Todas las sedes
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
 
 const NOTIFICATIONS = [
   { title: "Resultado de laboratorio listo", desc: "Hemograma — María Flores", time: "hace 5 min", color: "#00b8a9" },
@@ -23,8 +70,6 @@ const NOTIFICATIONS = [
 ];
 
 export function Topbar({ onMenu }: { onMenu: () => void }) {
-  const sede = useSede();
-
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center gap-2 border-b bg-background/80 px-3 backdrop-blur-md sm:px-4">
       <Button
@@ -40,10 +85,7 @@ export function Topbar({ onMenu }: { onMenu: () => void }) {
       <CommandPalette className="hidden w-full max-w-sm sm:flex" />
 
       <div className="ml-auto flex items-center gap-1 sm:gap-2">
-        <span className="hidden items-center gap-1.5 rounded-full border bg-muted/40 px-3 py-1.5 text-xs font-medium text-muted-foreground md:inline-flex">
-          <Building2 className="h-3.5 w-3.5 text-brand" />
-          {sede.name}
-        </span>
+        <SedeSwitcher />
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>

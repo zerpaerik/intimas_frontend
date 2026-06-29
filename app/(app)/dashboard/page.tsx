@@ -11,7 +11,7 @@ import { AreaTrendChart, DonutChart, RankBarChart } from "@/components/dashboard
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useAuth } from "@/lib/auth/store";
+import { useAuth, useSedeFiltro } from "@/lib/auth/store";
 import { getRole } from "@/lib/auth/roles";
 import { formatPEN, formatDateLong } from "@/lib/format";
 import { useApiItem } from "@/lib/api/hooks";
@@ -51,7 +51,8 @@ export default function DashboardPage() {
   const role = getRole(roleId);
   const isFinanzas = [1, 2, 12].includes(roleId);
 
-  const { data: s, loading } = useApiItem<Summary>("/dashboard");
+  const sedeId = useSedeFiltro();
+  const { data: s, loading } = useApiItem<Summary>(`/dashboard${sedeId ? `?sedeId=${sedeId}` : ""}`);
 
   const kpis = !s
     ? []

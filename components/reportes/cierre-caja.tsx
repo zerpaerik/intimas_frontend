@@ -13,6 +13,7 @@ import {
 import { cn } from "@/lib/utils";
 import { formatPEN } from "@/lib/format";
 import { useApiList } from "@/lib/api/hooks";
+import { useSedeFiltro } from "@/lib/auth/store";
 import { type CajaSesion } from "@/lib/api/caja";
 
 const n = (x: unknown) => Number(x ?? 0);
@@ -30,10 +31,12 @@ export function CierreCaja() {
   const [desde, setDesde] = React.useState("");
   const [hasta, setHasta] = React.useState("");
 
+  const sedeId = useSedeFiltro();
   const qs = new URLSearchParams();
   if (estado !== "Todas") qs.set("estado", estado);
   if (desde) qs.set("desde", desde);
   if (hasta) qs.set("hasta", hasta);
+  if (sedeId) qs.set("sedeId", String(sedeId));
   const { data: cajas, loading, error, refetch } = useApiList<CajaSesion>(`/caja?${qs.toString()}`);
 
   return (
