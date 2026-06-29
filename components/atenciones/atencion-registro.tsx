@@ -20,6 +20,7 @@ import { formatPEN } from "@/lib/format";
 import { api } from "@/lib/api/client";
 import { useApiItem, useApiList } from "@/lib/api/hooks";
 import { METODOS_PAGO, type Atencion } from "@/lib/api/atenciones";
+import { type CajaActual } from "@/lib/api/caja";
 import { useAuth } from "@/lib/auth/store";
 import type { Row } from "@/lib/resources/types";
 import { PatientSearch } from "./patient-search";
@@ -72,6 +73,8 @@ function RegistroForm({ mode, initial }: { mode: "create" | "edit"; initial?: At
   const sedeId = useAuth((s) => s.session?.sedeId);
   const personal = useApiList<Row>("/personal");
   const profesionales = useApiList<Row>("/profesionales");
+  const { data: cajaData } = useApiItem<CajaActual>(mode === "create" ? "/caja/actual" : null);
+  const sinCaja = mode === "create" && !!cajaData && !cajaData.caja;
 
   const [patient, setPatient] = React.useState<Row | null>(
     initial ? ({ ...initial.paciente } as unknown as Row) : null,
@@ -392,7 +395,13 @@ function RegistroForm({ mode, initial }: { mode: "create" | "edit"; initial?: At
               </p>
             )}
 
-            <Button className="mt-4 h-11 w-full bg-brand-gradient text-white" onClick={guardar} disabled={saving}>
+            {sinCaja && (
+              <p className="mt-3 flex items-center gap-2 rounded-lg border border-amber-500/30 bg-amber-500/5 px-3 py-2 text-xs text-amber-600">
+                <AlertTriangle className="h-4 w-4 shrink-0" />
+                No tienes una caja abierta. <a href="/caja" className="font-medium underline">Abre tu caja</a> para poder registrar.
+              </p>
+            )}
+            <Button className="mt-4 h-11 w-full bg-brand-gradient text-white" onClick={guardar} disabled={saving || sinCaja}>
               {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <ClipboardCheck className="h-4 w-4" />}
               {mode === "create" ? "Registrar atención" : "Guardar cambios"}
             </Button>

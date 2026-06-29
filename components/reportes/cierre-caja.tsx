@@ -1,44 +1,40 @@
 "use client";
 
 import * as React from "react";
-import { Banknote, CalendarDays, Printer, Scale, TrendingDown, TrendingUp, TriangleAlert } from "lucide-react";
-import { toast } from "sonner";
+import { CalendarDays, Eye, Lock, LockOpen, Printer, TriangleAlert } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+} from "@/components/ui/table";
 import { cn } from "@/lib/utils";
-import { formatPEN, formatDateLong } from "@/lib/format";
-import { useApiItem } from "@/lib/api/hooks";
-import { METODOS_PAGO } from "@/lib/api/atenciones";
+import { formatPEN } from "@/lib/format";
+import { useApiList } from "@/lib/api/hooks";
+import { type CajaSesion } from "@/lib/api/caja";
 
-interface CierreResponse {
-  fecha: string;
-  ingresos: { porMetodo: Record<string, number>; total: number; cantidad: number };
-  gastos: { porMetodo: Record<string, number>; total: number; cantidad: number };
-  neto: number;
-}
-
-const METODO_COLOR: Record<string, string> = {
-  Efectivo: "#16a34a",
-  Yape: "#e6007e",
-  Tarjeta: "#0091d5",
-  Depósito: "#7c3aed",
-};
-
+const n = (x: unknown) => Number(x ?? 0);
 function localDate(d: Date = new Date()) {
   const off = d.getTimezoneOffset();
   return new Date(d.getTime() - off * 60000).toISOString().slice(0, 10);
 }
+function fechaHora(iso?: string | null) {
+  if (!iso) return "—";
+  return new Date(iso).toLocaleString("es-PE", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
+}
 
 export function CierreCaja() {
-  const today = localDate();
-  const [fecha, setFecha] = React.useState(today);
-  const { data, loading, error, refetch } = useApiItem<CierreResponse>(`/reportes/cierre-caja?fecha=${fecha}`);
+  const [estado, setEstado] = React.useState<"Todas" | "Abierta" | "Cerrada">("Todas");
+  const [desde, setDesde] = React.useState("");
+  const [hasta, setHasta] = React.useState("");
 
-  const neto = Number(data?.neto ?? 0);
+  const qs = new URLSearchParams();
+  if (estado !== "Todas") qs.set("estado", estado);
+  if (desde) qs.set("desde", desde);
+  if (hasta) qs.set("hasta", hasta);
+  const { data: cajas, loading, error, refetch } = useApiList<CajaSesion>(`/caja?${qs.toString()}`);
 
   return (
     <div>
@@ -46,102 +42,89 @@ export function CierreCaja() {
         Reportes <span className="px-1">›</span>
         <span className="text-foreground">Cierre de Caja</span>
       </p>
-      <PageHeader
-        title="Cierre de caja"
-        description="Resumen de ingresos y egresos del día."
-        actions={
-          <Button variant="outline" onClick={() => toast.info("Exportación a PDF disponible en la versión final.")}>
-            <Printer className="h-4 w-4" /><span className="hidden sm:inline">Imprimir</span>
+      <PageHeader title="Cierres de caja" description="Sesiones de caja: apertura, arqueo y cierre. Cada reapertura es una caja nueva." />
+
+      <div className="rounded-2xl border bg-card">
+        <div className="flex flex-wrap items-end gap-3 border-b p-3">
+          {(["Todas", "Abierta", "Cerrada"] as const).map((e) => (
+            <Button key={e} size="sm" variant={estado === e ? "default" : "outline"} className={cn("h-9", estado === e && "bg-brand text-white hover:bg-brand/90")} onClick={() => setEstado(e)}>
+              {e === "Abierta" ? "Abiertas" : e === "Cerrada" ? "Cerradas" : "Todas"}
+            </Button>
+          ))}
+          <div className="mx-1 h-9 w-px bg-border" />
+          <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground">Desde</Label>
+            <Input type="date" value={desde} max={hasta || undefined} onChange={(e) => setDesde(e.target.value)} className="h-9 w-[9.5rem]" />
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground">Hasta</Label>
+            <Input type="date" value={hasta} min={desde || undefined} onChange={(e) => setHasta(e.target.value)} className="h-9 w-[9.5rem]" />
+          </div>
+          <Button variant="outline" size="sm" className="h-9" onClick={() => { setDesde(localDate()); setHasta(localDate()); }}>
+            <CalendarDays className="h-4 w-4" /> Hoy
           </Button>
-        }
-      />
-
-      <div className="mb-5 flex flex-wrap items-end gap-3 rounded-2xl border bg-card p-3">
-        <div className="space-y-1">
-          <Label htmlFor="fecha" className="text-xs text-muted-foreground">Fecha</Label>
-          <Input id="fecha" type="date" value={fecha} max={today} onChange={(e) => setFecha(e.target.value)} className="h-9 w-[10rem]" />
+          <span className="ml-auto text-sm text-muted-foreground">{cajas.length} cierre{cajas.length === 1 ? "" : "s"}</span>
         </div>
-        <Button variant={fecha === today ? "default" : "outline"} size="sm" className={cn("h-9", fecha === today && "bg-brand text-white hover:bg-brand/90")} onClick={() => setFecha(today)}>
-          <CalendarDays className="h-4 w-4" />Hoy
-        </Button>
-        <span className="ml-auto text-sm capitalize text-muted-foreground">{formatDateLong(`${fecha}T12:00:00`)}</span>
+
+        {error ? (
+          <div className="flex flex-col items-center gap-2 py-16 text-center text-sm text-muted-foreground">
+            <TriangleAlert className="h-6 w-6 text-destructive" /> No se pudieron cargar los cierres.
+            <Button variant="outline" size="sm" onClick={refetch} className="mt-1">Reintentar</Button>
+          </div>
+        ) : loading ? (
+          <div className="space-y-2 p-4">{Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-12 w-full rounded-lg" />)}</div>
+        ) : cajas.length === 0 ? (
+          <div className="py-16 text-center text-sm text-muted-foreground">No hay cierres de caja en este filtro.</div>
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow className="hover:bg-transparent">
+                <TableHead className="text-xs">Apertura</TableHead>
+                <TableHead className="text-xs">Cierre</TableHead>
+                <TableHead className="text-xs hidden md:table-cell">Cajero</TableHead>
+                <TableHead className="text-xs text-right">Ingresos</TableHead>
+                <TableHead className="text-xs text-right hidden sm:table-cell">Gastos</TableHead>
+                <TableHead className="text-xs text-right">Diferencia</TableHead>
+                <TableHead className="text-xs">Estado</TableHead>
+                <TableHead className="text-right text-xs">Detalle</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {cajas.map((c) => {
+                const abierta = c.estado === "Abierta";
+                const dif = n(c.totalDiferencia);
+                return (
+                  <TableRow key={c.id} className="cursor-pointer" onClick={() => window.open(`/comprobante-caja/${c.id}`, "_blank")}>
+                    <TableCell className="whitespace-nowrap text-muted-foreground">{fechaHora(c.fechaApertura)}</TableCell>
+                    <TableCell className="whitespace-nowrap text-muted-foreground">{abierta ? "—" : fechaHora(c.fechaCierre)}</TableCell>
+                    <TableCell className="hidden md:table-cell">{c.usuario?.nombre ?? "—"}</TableCell>
+                    <TableCell className="text-right tabular-nums">{abierta ? <span className="text-muted-foreground">en curso</span> : formatPEN(n(c.totalIngresos))}</TableCell>
+                    <TableCell className="text-right tabular-nums hidden sm:table-cell">{abierta ? "—" : formatPEN(n(c.totalGastos))}</TableCell>
+                    <TableCell className="text-right tabular-nums">
+                      {abierta ? "—" : (
+                        <span className={cn(Math.abs(dif) < 0.001 ? "text-success" : dif > 0 ? "text-amber-600" : "text-destructive")}>
+                          {dif > 0 ? "+" : ""}{formatPEN(dif)}
+                        </span>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <span className={cn("inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium", abierta ? "bg-brand/10 text-brand" : "bg-emerald-50 text-emerald-700")}>
+                        {abierta ? <LockOpen className="h-3 w-3" /> : <Lock className="h-3 w-3" />}{c.estado}
+                      </span>
+                    </TableCell>
+                    <TableCell className="text-right" onClick={(ev) => ev.stopPropagation()}>
+                      <Button size="sm" variant="outline" onClick={() => window.open(`/comprobante-caja/${c.id}`, "_blank")}>
+                        {abierta ? <Eye className="h-4 w-4" /> : <Printer className="h-4 w-4" />}
+                        {abierta ? "Ver" : "Imprimir"}
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        )}
       </div>
-
-      {error ? (
-        <div className="flex flex-col items-center gap-2 rounded-2xl border py-16 text-center text-sm text-muted-foreground">
-          <TriangleAlert className="h-6 w-6 text-destructive" />
-          No se pudo cargar el cierre.
-          <Button variant="outline" size="sm" onClick={refetch} className="mt-1">Reintentar</Button>
-        </div>
-      ) : loading || !data ? (
-        <div className="grid gap-4 lg:grid-cols-3">
-          {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-64 rounded-2xl" />)}
-        </div>
-      ) : (
-        <div className="grid items-start gap-4 lg:grid-cols-3">
-          {/* Ingresos */}
-          <Card>
-            <CardHeader className="border-b">
-              <CardTitle className="flex items-center gap-2 text-success">
-                <TrendingUp className="h-4 w-4" /> Ingresos
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="pt-4">
-              <p className="font-heading text-3xl font-bold text-success">{formatPEN(Number(data.ingresos.total))}</p>
-              <p className="mb-3 text-xs text-muted-foreground">{data.ingresos.cantidad} pago{data.ingresos.cantidad === 1 ? "" : "s"}</p>
-              <ul className="space-y-2">
-                {METODOS_PAGO.map((m) => (
-                  <li key={m} className="flex items-center gap-2 text-sm">
-                    <span className="h-2.5 w-2.5 rounded-full" style={{ background: METODO_COLOR[m] }} />
-                    <span className="text-muted-foreground">{m}</span>
-                    <span className="ml-auto font-medium tabular-nums">{formatPEN(Number(data.ingresos.porMetodo[m] ?? 0))}</span>
-                  </li>
-                ))}
-              </ul>
-            </CardContent>
-          </Card>
-
-          {/* Gastos */}
-          <Card>
-            <CardHeader className="border-b">
-              <CardTitle className="flex items-center gap-2 text-destructive">
-                <TrendingDown className="h-4 w-4" /> Gastos
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="pt-4">
-              <p className="font-heading text-3xl font-bold text-destructive">{formatPEN(Number(data.gastos.total))}</p>
-              <p className="mb-3 text-xs text-muted-foreground">{data.gastos.cantidad} gasto{data.gastos.cantidad === 1 ? "" : "s"}</p>
-              <ul className="space-y-2">
-                {METODOS_PAGO.map((m) => (
-                  <li key={m} className="flex items-center gap-2 text-sm">
-                    <span className="h-2.5 w-2.5 rounded-full" style={{ background: METODO_COLOR[m] }} />
-                    <span className="text-muted-foreground">{m}</span>
-                    <span className="ml-auto font-medium tabular-nums">{formatPEN(Number(data.gastos.porMetodo[m] ?? 0))}</span>
-                  </li>
-                ))}
-              </ul>
-            </CardContent>
-          </Card>
-
-          {/* Neto */}
-          <Card className={cn("border-2", neto >= 0 ? "border-success/30" : "border-destructive/30")}>
-            <CardHeader className="border-b">
-              <CardTitle className="flex items-center gap-2"><Scale className="h-4 w-4 text-brand" /> Neto del día</CardTitle>
-            </CardHeader>
-            <CardContent className="pt-4">
-              <p className={cn("font-heading text-4xl font-bold", neto >= 0 ? "text-success" : "text-destructive")}>{formatPEN(neto)}</p>
-              <div className="mt-4 space-y-1.5 text-sm">
-                <div className="flex justify-between"><span className="text-muted-foreground">Ingresos</span><span className="font-medium tabular-nums text-success">+{formatPEN(Number(data.ingresos.total))}</span></div>
-                <div className="flex justify-between"><span className="text-muted-foreground">Gastos</span><span className="font-medium tabular-nums text-destructive">−{formatPEN(Number(data.gastos.total))}</span></div>
-                <div className="flex justify-between border-t pt-1.5"><span className="font-semibold">Neto</span><span className={cn("font-bold tabular-nums", neto >= 0 ? "text-success" : "text-destructive")}>{formatPEN(neto)}</span></div>
-              </div>
-              <div className="mt-4 flex items-center gap-1.5 rounded-lg bg-muted/50 px-3 py-2 text-xs text-muted-foreground">
-                <Banknote className="h-3.5 w-3.5" /> Caja en efectivo: {formatPEN(Number(data.ingresos.porMetodo["Efectivo"] ?? 0) - Number(data.gastos.porMetodo["Efectivo"] ?? 0))}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
     </div>
   );
 }

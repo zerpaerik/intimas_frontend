@@ -2,6 +2,7 @@ import {
   Activity,
   BarChartBig,
   Banknote,
+  Wallet,
   ClipboardPlus,
   Contact,
   FileCheck2,
@@ -76,6 +77,7 @@ export const NAV: NavGroup[] = [
     id: "movimientos",
     label: "Movimientos",
     items: [
+      { label: "Caja", href: "/caja", icon: Wallet, roles: [1, 2, 7], built: true },
       { label: "Atenciones", href: "/movimientos/atenciones", icon: ClipboardPlus, roles: [1, 2, 7], built: true },
       { label: "Gastos", href: "/movimientos/gastos", icon: Receipt, roles: [1, 2, 7], built: true },
       { label: "Otros Ingresos", href: "/movimientos/ingresos", icon: Banknote, roles: [1, 2, 7] },
