@@ -4,27 +4,32 @@ import * as React from "react";
 import Image from "next/image";
 import { Loader2, Printer, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { formatPEN, formatDateLong } from "@/lib/format";
+import { formatPEN } from "@/lib/format";
 import { useApiItem } from "@/lib/api/hooks";
 import { type Atencion } from "@/lib/api/atenciones";
 
-const horaCorta = new Intl.DateTimeFormat("es-PE", { hour: "2-digit", minute: "2-digit" });
+const fmt = new Intl.DateTimeFormat("es-PE", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
 
-/** Número de comprobante legible a partir del id (serie B001). */
 function nroComprobante(id: number, sedeId?: number | null) {
   const serie = `B${String(sedeId ?? 1).padStart(3, "0")}`;
   return `${serie}-${String(id).padStart(8, "0")}`;
+}
+
+const Hr = () => <div style={{ borderTop: "1px dashed #9aa2ad", margin: "6px 0" }} />;
+function Row({ l, v, bold, color }: { l: string; v: string; bold?: boolean; color?: string }) {
+  return (
+    <div style={{ display: "flex", justifyContent: "space-between", gap: 8, fontWeight: bold ? 700 : 400, color }}>
+      <span>{l}</span>
+      <span style={{ fontVariantNumeric: "tabular-nums", textAlign: "right" }}>{v}</span>
+    </div>
+  );
 }
 
 export function Comprobante({ id }: { id: number }) {
   const { data: a, loading } = useApiItem<Atencion>(id ? `/atenciones/${id}` : null);
 
   if (loading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center text-slate-500">
-        <Loader2 className="mr-2 h-5 w-5 animate-spin" /> Generando comprobante…
-      </div>
-    );
+    return <div className="flex min-h-screen items-center justify-center text-slate-500"><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Generando comprobante…</div>;
   }
   if (!a) {
     return (
@@ -42,120 +47,81 @@ export function Comprobante({ id }: { id: number }) {
   const saldo = Number(a.saldo);
 
   return (
-    <div className="min-h-screen bg-slate-100 py-8 text-slate-800 print:bg-white print:py-0">
-      {/* Barra de acciones (no se imprime) */}
-      <div className="no-print mx-auto mb-4 flex max-w-[820px] items-center justify-between px-4">
-        <Button variant="outline" onClick={() => window.close()}>
-          <X className="h-4 w-4" /> Cerrar
-        </Button>
-        <Button className="bg-brand-gradient text-white" onClick={() => window.print()}>
-          <Printer className="h-4 w-4" /> Imprimir / Guardar PDF
-        </Button>
+    <div className="flex min-h-screen flex-col items-center bg-slate-100 py-6 print:bg-white print:py-0">
+      <div className="no-print mb-3 flex items-center justify-between gap-2" style={{ width: "80mm", maxWidth: "92vw" }}>
+        <Button variant="outline" size="sm" onClick={() => window.close()}><X className="h-4 w-4" /> Cerrar</Button>
+        <Button size="sm" className="bg-brand-gradient text-white" onClick={() => window.print()}><Printer className="h-4 w-4" /> Imprimir</Button>
       </div>
 
-      {/* Documento */}
-      <div className="mx-auto max-w-[820px] bg-white px-4 print:max-w-none print:px-0">
-        <div className="rounded-xl border border-slate-200 p-8 shadow-sm print:rounded-none print:border-0 print:p-2 print:shadow-none">
+      <div id="ticket" className="bg-white shadow-sm print:shadow-none" style={{ width: "80mm" }}>
+        <div style={{ padding: "5mm 4mm", fontSize: 12, lineHeight: 1.45, color: "#1f2937" }}>
           {/* Encabezado */}
-          <div className="flex items-start justify-between gap-6 border-b border-slate-200 pb-5">
-            <div className="flex items-start gap-3">
-              <Image src="/brand/intimas-logo.png" alt="Intimas" width={120} height={56} className="h-14 w-auto object-contain" />
-              <div className="text-xs leading-relaxed text-slate-500">
-                <p className="font-heading text-sm font-bold text-slate-800">Consultorios Médicos Intimas</p>
-                <p>Para Él y Ella</p>
-                <p>{a.sede?.nombre ?? "Sede Principal"}</p>
-                <p>RUC 20601234567</p>
-              </div>
-            </div>
-            <div className="rounded-lg border border-slate-300 px-4 py-3 text-center">
-              <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Comprobante de atención</p>
-              <p className="font-heading text-lg font-bold text-brand">{nroComprobante(a.id, a.sedeId)}</p>
-              <p className="text-xs text-slate-500">{formatDateLong(a.fecha)} · {horaCorta.format(dt)}</p>
-            </div>
+          <div style={{ textAlign: "center" }}>
+            <Image src="/brand/intimas-logo.png" alt="Intimas" width={140} height={56} className="mx-auto h-10 w-auto object-contain" />
+            <div style={{ fontWeight: 700, marginTop: 4 }}>Consultorios Médicos Intimas</div>
+            <div style={{ fontSize: 11, color: "#6b7280" }}>Para Él y Ella</div>
+            <div style={{ fontSize: 11, color: "#6b7280" }}>{a.sede?.nombre ?? "Sede Principal"}</div>
+            <div style={{ fontSize: 11, color: "#6b7280" }}>RUC 20601234567</div>
+          </div>
+
+          <Hr />
+          <div style={{ textAlign: "center" }}>
+            <div style={{ fontWeight: 700 }}>COMPROBANTE DE ATENCIÓN</div>
+            <div style={{ fontVariantNumeric: "tabular-nums" }}>{nroComprobante(a.id, a.sedeId)}</div>
+            <div style={{ fontSize: 11, color: "#6b7280" }}>{fmt.format(dt)}</div>
           </div>
 
           {a.anulada && (
-            <div className="mt-4 rounded-lg border border-red-300 bg-red-50 px-4 py-2 text-center text-sm font-bold uppercase tracking-widest text-red-600">
-              Documento anulado
+            <div style={{ textAlign: "center", border: "1px solid #dc2626", color: "#dc2626", fontWeight: 700, padding: "2px 0", margin: "6px 0", letterSpacing: 2 }}>
+              ANULADO
             </div>
           )}
 
-          {/* Datos del paciente */}
-          <div className="mt-5 grid grid-cols-2 gap-4 text-sm">
-            <div>
-              <p className="text-[11px] uppercase tracking-wide text-slate-400">Paciente</p>
-              <p className="font-semibold">{nombre}</p>
-              <p className="text-slate-500">{a.paciente?.tipoDoc} {a.paciente?.numDoc}</p>
-              {a.paciente?.telefono && <p className="text-slate-500">Tel. {a.paciente.telefono}</p>}
-            </div>
-            <div className="text-right">
-              <p className="text-[11px] uppercase tracking-wide text-slate-400">Atención</p>
-              <p>Origen: <span className="font-medium">{a.origenTipo}</span></p>
-              {a.origenValor && <p className="text-slate-500">{a.origenValor}</p>}
-              <p className="text-slate-500">Atendió: {a.usuario?.nombre ?? "—"}</p>
-            </div>
-          </div>
+          <Hr />
+          <div><b>Paciente:</b> {nombre || "—"}</div>
+          <div style={{ color: "#6b7280" }}>{a.paciente?.tipoDoc} {a.paciente?.numDoc}{a.paciente?.telefono ? ` · Tel ${a.paciente.telefono}` : ""}</div>
+          <div style={{ color: "#6b7280" }}>Origen: {a.origenTipo}{a.origenValor ? ` · ${a.origenValor}` : ""}</div>
+          <div style={{ color: "#6b7280" }}>Atendió: {a.usuario?.nombre ?? "—"}</div>
 
-          {/* Ítems */}
-          <table className="mt-6 w-full text-sm">
-            <thead>
-              <tr className="border-b border-slate-300 text-left text-[11px] uppercase tracking-wide text-slate-500">
-                <th className="py-2 font-semibold">Cant.</th>
-                <th className="py-2 font-semibold">Descripción</th>
-                <th className="py-2 text-right font-semibold">Importe</th>
-              </tr>
-            </thead>
-            <tbody>
-              {a.items.map((it, i) => (
-                <tr key={i} className="border-b border-slate-100">
-                  <td className="py-2 align-top">1</td>
-                  <td className="py-2">
-                    <div className="font-medium">{it.nombre}</div>
-                    <div className="text-xs text-slate-400">{it.kind}</div>
-                  </td>
-                  <td className="py-2 text-right tabular-nums">{formatPEN(Number(it.monto))}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-
-          {/* Totales */}
-          <div className="mt-5 flex justify-end">
-            <div className="w-full max-w-[16rem] space-y-1.5 text-sm">
-              <div className="flex justify-between"><span className="text-slate-500">Total</span><span className="font-semibold tabular-nums">{formatPEN(total)}</span></div>
-              <div className="flex justify-between"><span className="text-slate-500">Pagado</span><span className="tabular-nums text-emerald-600">{formatPEN(pagado)}</span></div>
-              <div className="flex justify-between border-t border-slate-300 pt-1.5 text-base">
-                <span className="font-bold">{saldo > 0.001 ? "Saldo pendiente" : "Saldo"}</span>
-                <span className={`font-bold tabular-nums ${saldo > 0.001 ? "text-red-600" : ""}`}>{formatPEN(saldo)}</span>
+          <Hr />
+          {a.items.map((it, i) => (
+            <div key={i} style={{ marginBottom: 4 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", gap: 8 }}>
+                <span style={{ overflowWrap: "anywhere" }}>{it.nombre}</span>
+                <span style={{ fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap" }}>{formatPEN(Number(it.monto))}</span>
               </div>
+              <div style={{ fontSize: 10, color: "#9aa2ad" }}>{it.kind}</div>
             </div>
-          </div>
+          ))}
 
-          {/* Pagos */}
+          <Hr />
+          <Row l="Total" v={formatPEN(total)} bold />
+          <Row l="Pagado" v={formatPEN(pagado)} color="#16a34a" />
+          <Row l={saldo > 0.001 ? "Saldo pendiente" : "Saldo"} v={formatPEN(saldo)} bold color={saldo > 0.001 ? "#dc2626" : undefined} />
+
           {a.pagos.length > 0 && (
-            <div className="mt-5 border-t border-slate-200 pt-3 text-sm">
-              <p className="mb-1.5 text-[11px] uppercase tracking-wide text-slate-400">Pagos recibidos</p>
-              <div className="space-y-1">
-                {a.pagos.map((p) => (
-                  <div key={p.id} className="flex justify-between text-slate-600">
-                    <span>{p.metodo} · {p.tipo === "ABONO_INICIAL" ? "Abono inicial" : "Cobro"} · {formatDateLong(p.fecha)}</span>
-                    <span className="tabular-nums">{formatPEN(Number(p.monto))}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
+            <>
+              <Hr />
+              <div style={{ fontSize: 11, color: "#6b7280", marginBottom: 2 }}>Pagos recibidos</div>
+              {a.pagos.map((p) => (
+                <div key={p.id} style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: "#4b5563" }}>
+                  <span>{p.metodo} · {p.tipo === "ABONO_INICIAL" ? "abono" : "cobro"}</span>
+                  <span style={{ fontVariantNumeric: "tabular-nums" }}>{formatPEN(Number(p.monto))}</span>
+                </div>
+              ))}
+            </>
           )}
 
-          {/* Pie */}
-          <div className="mt-8 border-t border-slate-200 pt-4 text-center text-xs text-slate-400">
-            <p className="font-medium text-slate-500">¡Gracias por su preferencia!</p>
-            <p>Representación impresa del comprobante de atención · Consultorios Médicos Intimas</p>
-            <p>Este documento no tiene validez tributaria (mockup de demostración).</p>
+          <Hr />
+          <div style={{ textAlign: "center", fontSize: 11, color: "#6b7280" }}>
+            <div style={{ fontWeight: 600 }}>¡Gracias por su preferencia!</div>
+            <div>Documento sin validez tributaria</div>
+            <div>(mockup de demostración)</div>
           </div>
         </div>
       </div>
 
-      <style>{`@media print { .no-print { display: none !important; } @page { margin: 12mm; size: A4; } html, body { background: #fff !important; } }`}</style>
+      <style>{`@media print { .no-print { display: none !important; } @page { size: 80mm auto; margin: 0; } html, body { background: #fff !important; } #ticket { box-shadow: none !important; } }`}</style>
     </div>
   );
 }
