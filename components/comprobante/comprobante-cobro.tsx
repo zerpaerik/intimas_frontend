@@ -54,9 +54,9 @@ export function ComprobanteCobro({ atencionId, pagoId }: { atencionId: number; p
       <div id="ticket" className="bg-white shadow-sm print:shadow-none" style={{ width: "80mm" }}>
         <div style={{ padding: "5mm 4mm", fontSize: 12, lineHeight: 1.45, color: "#1f2937" }}>
           <div style={{ textAlign: "center" }}>
-            <Image src="/brand/intimas-logo.png" alt="Intimas" width={140} height={56} className="mx-auto h-10 w-auto object-contain" />
-            <div style={{ fontWeight: 700, marginTop: 4 }}>Consultorios Médicos Intimas</div>
-            <div style={{ fontSize: 11, color: "#6b7280" }}>Para Él y Ella</div>
+            <Image src="/brand/logobn.jpeg" alt="Valmedic" width={140} height={56} className="mx-auto h-10 w-auto object-contain" />
+            <div style={{ fontWeight: 700, marginTop: 4 }}>Policlínico Valmedic</div>
+            <div style={{ fontSize: 11, color: "#6b7280" }}>íntimas</div>
             <div style={{ fontSize: 11, color: "#6b7280" }}>{a.sede?.nombre ?? "Sede Principal"}</div>
             <div style={{ fontSize: 11, color: "#6b7280" }}>RUC 20601234567</div>
           </div>

@@ -20,11 +20,11 @@ const jakarta = Plus_Jakarta_Sans({
 
 export const metadata: Metadata = {
   title: {
-    default: "Intimas — Consultorios Médicos",
-    template: "%s · Intimas",
+    default: "Policlínico Valmedic",
+    template: "%s · Valmedic",
   },
   description:
-    "Sistema de gestión clínica Intimas — Para Él y Ella. Pacientes, atenciones, laboratorio y más.",
+    "Sistema de gestión clínica Policlínico Valmedic. Pacientes, atenciones, laboratorio y más.",
   icons: { icon: "/favicon.ico" },
 };
 

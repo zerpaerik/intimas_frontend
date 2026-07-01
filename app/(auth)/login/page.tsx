@@ -76,12 +76,12 @@ export default function LoginPage() {
         <div className="w-full max-w-md">
           <div className="mb-8 flex justify-center">
             <Image
-              src="/brand/intimas-logo.png"
-              alt="Intimas — Consultorios Médicos"
-              width={823}
-              height={274}
+              src="/brand/logo.jpeg"
+              alt="Policlínico Valmedic"
+              width={1000}
+              height={500}
               priority
-              className="h-auto w-[210px]"
+              className="h-auto w-[230px]"
             />
           </div>
 

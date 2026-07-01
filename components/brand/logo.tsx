@@ -1,10 +1,11 @@
+import Image from "next/image";
 import { cn } from "@/lib/utils";
 
 type MarkVariant = "gradient" | "white" | "currentColor";
 
 /**
- * Emblema Intimas: badge "squircle" con la dualidad "Él y Ella"
- * (dos figuras unidas) — evoca el logo original de los consultorios.
+ * Marca cuadrada (emblema abstracto) para espacios pequeños:
+ * sidebar colapsado y loaders, donde el logo horizontal no cabe.
  */
 export function LogoMark({
   className,
@@ -13,7 +14,7 @@ export function LogoMark({
   className?: string;
   variant?: MarkVariant;
 }) {
-  const gradId = "intimas-mark-grad";
+  const gradId = "valmedic-mark-grad";
   const badgeFill =
     variant === "gradient"
       ? `url(#${gradId})`
@@ -21,42 +22,20 @@ export function LogoMark({
         ? "rgba(255,255,255,0.16)"
         : "currentColor";
   const badgeStroke = variant === "white" ? "rgba(255,255,255,0.55)" : "none";
-  const figureFill = variant === "gradient" ? "#ffffff" : variant === "white" ? "#ffffff" : "#ffffff";
 
   return (
-    <svg
-      viewBox="0 0 64 64"
-      className={cn("h-9 w-9", className)}
-      role="img"
-      aria-label="Intimas"
-      fill="none"
-    >
+    <svg viewBox="0 0 64 64" className={cn("h-9 w-9", className)} role="img" aria-label="Valmedic" fill="none">
       <defs>
         <linearGradient id={gradId} x1="0" y1="0" x2="1" y2="1">
           <stop offset="0%" stopColor="#e6007e" />
           <stop offset="100%" stopColor="#0091d5" />
         </linearGradient>
       </defs>
-      <rect
-        x="2"
-        y="2"
-        width="60"
-        height="60"
-        rx="19"
-        fill={badgeFill}
-        stroke={badgeStroke}
-        strokeWidth="1.5"
-      />
-      <g fill={figureFill}>
-        {/* Ella */}
-        <circle cx="24" cy="24" r="7.2" opacity="0.96" />
-        {/* Él */}
-        <circle cx="40" cy="24" r="7.2" />
-        {/* Cuerpos unidos */}
-        <path
-          d="M15 50c0-11 7.4-15.5 17-15.5S49 39 49 50c0 1.5-1 2.2-2.2 2.2H17.2C16 52.2 15 51.5 15 50Z"
-          opacity="0.96"
-        />
+      <rect x="2" y="2" width="60" height="60" rx="19" fill={badgeFill} stroke={badgeStroke} strokeWidth="1.5" />
+      {/* Cruz médica */}
+      <g fill="#ffffff">
+        <rect x="28" y="16" width="8" height="32" rx="2" />
+        <rect x="16" y="28" width="32" height="8" rx="2" />
       </g>
     </svg>
   );
@@ -65,49 +44,38 @@ export function LogoMark({
 type LogoTone = "brand" | "light" | "dark";
 
 /**
- * Logo completo: emblema + wordmark "Intimas" y subtítulo opcional.
+ * Logo principal de la marca (imagen a color "Policlínico Valmedic").
+ * En fondos de color (tone="light") se enmarca en una tarjeta blanca
+ * porque el archivo es JPEG (fondo blanco, sin transparencia).
  */
 export function Logo({
   className,
   tone = "brand",
-  showWordmark = true,
   subtitle,
-  markClassName,
+  imgClassName,
 }: {
   className?: string;
   tone?: LogoTone;
-  showWordmark?: boolean;
   subtitle?: string;
-  markClassName?: string;
+  imgClassName?: string;
 }) {
-  const markVariant: MarkVariant = tone === "light" ? "white" : "gradient";
-  const wordClass =
-    tone === "brand"
-      ? "text-brand-gradient"
-      : tone === "light"
-        ? "text-white"
-        : "text-foreground";
-  const subClass = tone === "light" ? "text-white/70" : "text-muted-foreground";
-
+  const onDark = tone === "light";
   return (
-    <div className={cn("flex items-center gap-2.5", className)}>
-      <LogoMark variant={markVariant} className={markClassName} />
-      {showWordmark && (
-        <div className="flex flex-col leading-none">
-          <span
-            className={cn(
-              "font-heading text-xl font-extrabold tracking-tight",
-              wordClass,
-            )}
-          >
-            Intimas
-          </span>
-          {subtitle && (
-            <span className={cn("text-[10px] font-medium tracking-wide", subClass)}>
-              {subtitle}
-            </span>
-          )}
-        </div>
+    <div className={cn("flex flex-col gap-1.5", className)}>
+      <span className={cn("inline-flex w-fit items-center", onDark && "rounded-xl bg-white p-2 shadow-sm")}>
+        <Image
+          src="/brand/logo.jpeg"
+          alt="Policlínico Valmedic"
+          width={1000}
+          height={500}
+          priority
+          className={cn("h-9 w-auto object-contain", imgClassName)}
+        />
+      </span>
+      {subtitle && (
+        <span className={cn("text-[10px] font-medium tracking-wide", onDark ? "text-white/70" : "text-muted-foreground")}>
+          {subtitle}
+        </span>
       )}
     </div>
   );

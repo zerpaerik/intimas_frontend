@@ -70,9 +70,9 @@ export function ComprobantePediatria({ id }: { id: number }) {
           {/* Encabezado */}
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, borderBottom: `2px solid ${ACCENT}`, paddingBottom: 10 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <Image src="/brand/intimas-logo.png" alt="Intimas" width={120} height={52} style={{ height: 46, width: "auto", objectFit: "contain" }} />
+              <Image src="/brand/logobn.jpeg" alt="Valmedic" width={120} height={52} style={{ height: 46, width: "auto", objectFit: "contain" }} />
               <div style={{ fontSize: 11, color: "#6b727b" }}>
-                <div style={{ fontSize: 13, fontWeight: 500, color: "#23282e" }}>Consultorios Médicos Intimas</div>
+                <div style={{ fontSize: 13, fontWeight: 500, color: "#23282e" }}>Policlínico Valmedic</div>
                 <div>Pediatría · Crecimiento y desarrollo</div>
                 <div>RUC 20601234567</div>
               </div>
@@ -187,7 +187,7 @@ export function ComprobantePediatria({ id }: { id: number }) {
           </Sec>
 
           <div style={{ marginTop: 16, textAlign: "center", fontSize: 11, color: "#9aa2ad" }}>
-            Representación impresa de la historia clínica pediátrica · Consultorios Médicos Intimas (mockup de demostración)
+            Representación impresa de la historia clínica pediátrica · Policlínico Valmedic (mockup de demostración)
           </div>
         </div>
       </div>

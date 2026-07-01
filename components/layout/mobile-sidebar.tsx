@@ -24,7 +24,7 @@ export function MobileSidebar({
           <Logo />
           <SheetTitle className="sr-only">Menú principal</SheetTitle>
           <SheetDescription className="sr-only">
-            Navegación principal del sistema Intimas
+            Navegación principal del sistema Valmedic
           </SheetDescription>
         </SheetHeader>
         <div className="flex-1 overflow-y-auto">

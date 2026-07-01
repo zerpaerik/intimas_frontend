@@ -10,7 +10,7 @@ const features = [
   {
     icon: Building2,
     title: "Multisede",
-    desc: "Principal e Intimas 2 sincronizadas en tiempo real.",
+    desc: "Todas tus sedes sincronizadas en tiempo real.",
   },
   {
     icon: Activity,
@@ -86,7 +86,7 @@ export function LoginArtwork() {
 
       {/* Encabezado */}
       <div className="relative z-10 flex items-center justify-between">
-        <Logo tone="light" subtitle="Consultorios Médicos" />
+        <Logo tone="light" imgClassName="h-11" />
         <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 text-xs font-medium backdrop-blur-sm ring-1 ring-white/20">
           <Sparkles className="h-3.5 w-3.5" />
           Sistema clínico
@@ -96,7 +96,7 @@ export function LoginArtwork() {
       {/* Contenido central */}
       <div className="relative z-10 max-w-md">
         <p className="mb-3 text-sm font-semibold uppercase tracking-[0.2em] text-white/70">
-          Para Él y Ella
+          íntimas
         </p>
         <h1 className="font-heading text-4xl font-extrabold leading-tight xl:text-5xl">
           Cuidamos de ellas
@@ -124,7 +124,7 @@ export function LoginArtwork() {
 
       {/* Pie */}
       <div className="relative z-10 flex items-center justify-between text-xs text-white/60">
-        <span>© {new Date().getFullYear()} Intimas · Consultorios Médicos</span>
+        <span>© {new Date().getFullYear()} Policlínico Valmedic</span>
         <span>Lima · Perú</span>
       </div>
     </div>

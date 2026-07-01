@@ -67,9 +67,9 @@ export function ComprobanteControl({ id }: { id: number }) {
         <div style={{ padding: 24 }} className="print:p-2">
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, borderBottom: `2px solid ${ACCENT}`, paddingBottom: 10 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <Image src="/brand/intimas-logo.png" alt="Intimas" width={120} height={52} style={{ height: 46, width: "auto", objectFit: "contain" }} />
+              <Image src="/brand/logobn.jpeg" alt="Valmedic" width={120} height={52} style={{ height: 46, width: "auto", objectFit: "contain" }} />
               <div style={{ fontSize: 11, color: "#6b6168" }}>
-                <div style={{ fontSize: 13, fontWeight: 500, color: "#2c2c2a" }}>Consultorios Médicos Intimas</div>
+                <div style={{ fontSize: 13, fontWeight: 500, color: "#2c2c2a" }}>Policlínico Valmedic</div>
                 <div>Consultorio Femenino · Obstetricia · RUC 20601234567</div>
               </div>
             </div>
@@ -138,7 +138,7 @@ export function ComprobanteControl({ id }: { id: number }) {
           </div>
 
           <div style={{ marginTop: 14, textAlign: "center", fontSize: 11, color: "#a39aa0" }}>
-            Carné de control prenatal · Consultorios Médicos Intimas (mockup de demostración)
+            Carné de control prenatal · Policlínico Valmedic (mockup de demostración)
           </div>
         </div>
       </div>

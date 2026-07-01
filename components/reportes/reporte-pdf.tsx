@@ -84,9 +84,9 @@ export function ReportePdf({
           {/* Encabezado */}
           <div className="flex items-start justify-between gap-6 border-b border-slate-200 pb-5">
             <div className="flex items-start gap-3">
-              <Image src="/brand/intimas-logo.png" alt="Intimas" width={120} height={56} className="h-12 w-auto object-contain" />
+              <Image src="/brand/logobn.jpeg" alt="Valmedic" width={120} height={56} className="h-12 w-auto object-contain" />
               <div className="text-xs leading-relaxed text-slate-500">
-                <p className="font-heading text-sm font-bold text-slate-800">Consultorios Médicos Intimas</p>
+                <p className="font-heading text-sm font-bold text-slate-800">Policlínico Valmedic</p>
                 <p>RUC 20601234567</p>
               </div>
             </div>
@@ -179,7 +179,7 @@ export function ReportePdf({
           </div>
 
           <div className="mt-8 border-t border-slate-200 pt-4 text-center text-xs text-slate-400">
-            <p>{data.cantidad} registro{data.cantidad === 1 ? "" : "s"} · Consultorios Médicos Intimas</p>
+            <p>{data.cantidad} registro{data.cantidad === 1 ? "" : "s"} · Policlínico Valmedic</p>
             <p>Reporte interno (mockup de demostración).</p>
           </div>
         </div>
