@@ -66,9 +66,9 @@ export function Logo({
         <Image
           src="/brand/logo.jpeg"
           alt="Policlínico Valmedic"
-          width={1000}
-          height={500}
-          priority
+          width={900}
+          height={451}
+          sizes="240px"
           className={cn("h-9 w-auto object-contain", imgClassName)}
         />
       </span>
