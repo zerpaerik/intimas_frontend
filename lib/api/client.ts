@@ -24,10 +24,12 @@ function getToken(): string | null {
 
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const token = getToken();
+  // Con FormData dejamos que el navegador ponga el Content-Type (boundary multipart).
+  const isForm = typeof FormData !== "undefined" && options.body instanceof FormData;
   const res = await fetch(`${API_URL}${path}`, {
     ...options,
     headers: {
-      "Content-Type": "application/json",
+      ...(isForm ? {} : { "Content-Type": "application/json" }),
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...(options.headers ?? {}),
     },
@@ -66,4 +68,6 @@ export const api = {
   put: <T = unknown>(path: string, body?: unknown) =>
     request<T>(path, { method: "PUT", body: JSON.stringify(body ?? {}) }),
   del: <T = unknown>(path: string) => request<T>(path, { method: "DELETE" }),
+  upload: <T = unknown>(path: string, form: FormData) =>
+    request<T>(path, { method: "POST", body: form }),
 };

@@ -1,12 +1,13 @@
 "use client";
 
 import * as React from "react";
-import { CalendarClock, FileText, HandCoins, HeartPulse } from "lucide-react";
+import { CalendarClock, ExternalLink, FileText, HandCoins, HeartPulse } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { calcAge, formatDate, formatPEN, initials } from "@/lib/format";
 import { useApiItem } from "@/lib/api/hooks";
+import { API_URL } from "@/lib/config";
 import type { Row } from "@/lib/resources/types";
 import { CobroDialog } from "./cobro-dialog";
 
@@ -16,7 +17,7 @@ interface HistorialAtencion {
   total: number; pagado: number; saldo: number; estado: string;
   items: HistorialItem[];
 }
-interface HistorialResultado { nombre: string; tipo: string; fecha: string; estado: string }
+interface HistorialResultado { id: number; nombre: string; tipo: string; fecha: string; estado: string; esArchivo?: boolean }
 interface Historial {
   antecedentes: { alergias?: string; antPatologicos?: string; antFamiliares?: string; grupoSanguineo?: string };
   atenciones: HistorialAtencion[];
@@ -166,15 +167,25 @@ export function PatientHistory({ patient, onCobro }: { patient: Row; onCobro?: (
             {h.resultados.length === 0 ? (
               <p className="py-6 text-center text-sm text-muted-foreground">Sin resultados.</p>
             ) : (
-              h.resultados.map((r, i) => (
-                <div key={i} className="flex items-center gap-3 rounded-xl border p-2.5">
+              h.resultados.map((r) => (
+                <button
+                  key={r.id}
+                  onClick={() =>
+                    window.open(
+                      r.esArchivo ? `${API_URL}/resultados/${r.id}/archivo` : `/comprobante-resultado/${r.id}`,
+                      "_blank",
+                    )
+                  }
+                  className="flex w-full items-center gap-3 rounded-xl border p-2.5 text-left transition-colors hover:bg-accent/50"
+                >
                   <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-medium">{r.nombre}</p>
                     <p className="text-xs text-muted-foreground">{r.tipo} · {formatDate(r.fecha)}</p>
                   </div>
                   <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-[11px]">{r.estado}</span>
-                </div>
+                  <ExternalLink className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                </button>
               ))
             )}
           </TabsContent>

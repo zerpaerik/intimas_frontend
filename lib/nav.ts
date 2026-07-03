@@ -6,6 +6,7 @@ import {
   ClipboardPlus,
   Contact,
   FileCheck2,
+  FileClock,
   HandCoins,
   KeyRound,
   LayoutDashboard,
@@ -113,10 +114,10 @@ export const NAV: NavGroup[] = [
     id: "resultados",
     label: "Resultados",
     items: [
-      { label: "Pendientes — Servicio", href: "/resultados/pendientes-servicio", icon: FileCheck2, roles: [1, 2, 7, 10] },
-      { label: "Pendientes — Laboratorio", href: "/resultados/pendientes-laboratorio", icon: FileCheck2, roles: [1, 2, 7, 10] },
-      { label: "Guardados — Servicio", href: "/resultados/guardados-servicio", icon: FileCheck2, roles: [1, 2, 7, 10] },
-      { label: "Guardados — Laboratorio", href: "/resultados/guardados-laboratorio", icon: FileCheck2, roles: [1, 2, 7, 10] },
+      { label: "Pendientes — Servicio", href: "/resultados/pendientes-servicio", icon: FileClock, roles: [1, 2, 7, 10], built: true },
+      { label: "Pendientes — Laboratorio", href: "/resultados/pendientes-laboratorio", icon: FileClock, roles: [1, 2, 7, 10], built: true },
+      { label: "Guardados — Servicio", href: "/resultados/guardados-servicio", icon: FileCheck2, roles: [1, 2, 7, 10], built: true },
+      { label: "Guardados — Laboratorio", href: "/resultados/guardados-laboratorio", icon: FileCheck2, roles: [1, 2, 7, 10], built: true },
     ],
   },
   {
