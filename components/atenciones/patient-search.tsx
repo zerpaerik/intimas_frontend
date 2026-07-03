@@ -25,8 +25,6 @@ export function PatientSearch({
   value: Row | null;
   onSelect: (p: Row | null) => void;
 }) {
-  const { data: pacientes, refetch } = useApiList<Row>("/pacientes");
-
   const [query, setQuery] = React.useState("");
   const [creating, setCreating] = React.useState(false);
   const [saving, setSaving] = React.useState(false);
@@ -39,19 +37,20 @@ export function PatientSearch({
     telefono: "",
   });
 
-  const results = React.useMemo(() => {
-    const q = query.trim().toLowerCase();
-    if (q.length < 2) return [];
-    return pacientes
-      .filter(
-        (p) =>
-          String(p.numDoc ?? "").toLowerCase().includes(q) ||
-          `${p.nombres} ${p.apellidos}`.toLowerCase().includes(q),
-      )
-      .slice(0, 6);
-  }, [pacientes, query]);
+  // Búsqueda en el SERVIDOR (con debounce): no cargamos los miles de pacientes
+  // al navegador; solo pedimos las coincidencias de lo que se escribe.
+  const [debounced, setDebounced] = React.useState("");
+  React.useEffect(() => {
+    const t = setTimeout(() => setDebounced(query.trim()), 300);
+    return () => clearTimeout(t);
+  }, [query]);
+  const search = debounced.length >= 2 ? debounced : "";
+  const { data: pacientes, loading, refetch } = useApiList<Row>(
+    search ? `/pacientes?search=${encodeURIComponent(search)}` : null,
+  );
 
-  const noResults = query.trim().length >= 3 && results.length === 0;
+  const results = React.useMemo(() => pacientes.slice(0, 8), [pacientes]);
+  const noResults = search.length >= 2 && !loading && results.length === 0;
 
   function startCreate() {
     setForm((f) => ({ ...f, numDoc: /^\d+$/.test(query.trim()) ? query.trim() : f.numDoc }));
