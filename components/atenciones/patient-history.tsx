@@ -35,8 +35,8 @@ function Dato({ label, value }: { label: string; value?: string | null }) {
   if (!value) return null;
   return (
     <div className="flex items-start justify-between gap-3 py-1.5">
-      <span className="text-xs text-muted-foreground">{label}</span>
-      <span className="max-w-[60%] text-right text-sm font-medium">{value}</span>
+      <span className="shrink-0 text-xs text-muted-foreground">{label}</span>
+      <span className="min-w-0 max-w-[65%] text-right text-sm font-medium">{value}</span>
     </div>
   );
 }

@@ -159,7 +159,7 @@ export function InformeEditor({ itemId }: { itemId: number }) {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-3 lg:grid-cols-[1fr_auto_auto]">
+      <div className="grid grid-cols-1 gap-3 lg:grid-cols-[minmax(0,1fr)_auto_auto]">
         <div className="space-y-1.5">
           <Label>Plantilla</Label>
           <Select value={plantillaId} onValueChange={aplicarPlantilla}>

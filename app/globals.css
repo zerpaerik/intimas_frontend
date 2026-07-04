@@ -161,6 +161,11 @@
   body {
     @apply bg-background text-foreground;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    /* Corta palabras larguísimas sin espacios (correos, DNIs pegados, texto libre
+       sin espacios) para que NUNCA desborden su contenedor ni el ancho de la página.
+       `anywhere` (a diferencia de break-word) reduce el min-content y evita que los
+       layouts flex/grid se estiren. Es heredada → aplica a todo el texto. */
+    overflow-wrap: anywhere;
   }
   html {
     @apply font-sans antialiased;

@@ -223,7 +223,7 @@ function RegistroForm({ mode, initial }: { mode: "create" | "edit"; initial?: At
         }
       />
 
-      <div className="grid items-start gap-6 lg:grid-cols-[1.55fr_1fr]">
+      <div className="grid items-start gap-6 lg:grid-cols-[1.55fr_minmax(0,1fr)]">
         <div className="space-y-5">
           <Step n={1} title="Paciente" icon={UserSearch}>
             <PatientSearch value={patient} onSelect={setPatient} />
