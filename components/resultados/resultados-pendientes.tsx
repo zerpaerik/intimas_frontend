@@ -58,10 +58,10 @@ export function ResultadosPendientes({ track }: { track: Track }) {
   const { data: rows, loading, error, refetch } = useApiList<ResultadoPendiente>(path);
 
   const esLab = track === "lab";
-  const title = esLab ? "Pendientes — Laboratorio" : "Pendientes — Servicios y Ecografías";
+  const title = esLab ? "Pendientes — Laboratorio" : "Pendientes — Ecografías";
   const description = esLab
     ? "Análisis registrados a la espera de que llegue su resultado."
-    : "Ecografías y servicios registrados a la espera de su informe.";
+    : "Ecografías registradas a la espera de su informe (otros servicios no generan informe).";
 
   return (
     <div>
