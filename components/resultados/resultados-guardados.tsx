@@ -47,7 +47,8 @@ const iso = (d: Date) =>
 
 export function ResultadosGuardados({ track }: { track: Track }) {
   const sedeId = useSedeFiltro();
-  const [desde, setDesde] = React.useState(() => iso(new Date(Date.now() - 30 * 864e5)));
+  // Por defecto solo el día en curso; los filtros de fecha permiten ubicar otros días.
+  const [desde, setDesde] = React.useState(() => iso(new Date()));
   const [hasta, setHasta] = React.useState(() => iso(new Date()));
   const [query, setQuery] = React.useState("");
   const [debounced, setDebounced] = React.useState("");

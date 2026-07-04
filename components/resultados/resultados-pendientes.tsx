@@ -38,7 +38,8 @@ const iso = (d: Date) =>
 export function ResultadosPendientes({ track }: { track: Track }) {
   const router = useRouter();
   const sedeId = useSedeFiltro();
-  const [desde, setDesde] = React.useState(() => iso(new Date(Date.now() - 30 * 864e5)));
+  // Por defecto solo el día en curso (evita inundarse con el histórico); los filtros de fecha permiten ver otros días.
+  const [desde, setDesde] = React.useState(() => iso(new Date()));
   const [hasta, setHasta] = React.useState(() => iso(new Date()));
   const [query, setQuery] = React.useState("");
   const [debounced, setDebounced] = React.useState("");
