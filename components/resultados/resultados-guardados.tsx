@@ -69,7 +69,7 @@ export function ResultadosGuardados({ track }: { track: Track }) {
   const { data: rows, loading, error, refetch } = useApiList<Resultado>(path);
 
   const esLab = track === "lab";
-  const title = esLab ? "Guardados — Laboratorio" : "Guardados — Servicios y Ecografías";
+  const title = esLab ? "Guardados — Laboratorio" : "Guardados — Ecografías";
 
   function verInforme(r: Resultado) {
     window.open(`/comprobante-resultado/${r.id}`, "_blank");
