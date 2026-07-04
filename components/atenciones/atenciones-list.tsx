@@ -29,6 +29,29 @@ const ESTADO_COLOR: Record<AtnEstado, string> = {
   Pendiente: "#ef4444",
 };
 
+// Método de pago: color, abreviatura y orden fijo (para que se muestre ordenado).
+const METODO_COLOR: Record<string, string> = {
+  Efectivo: "#16a34a",
+  Yape: "#e6007e",
+  Tarjeta: "#0091d5",
+  "Depósito": "#7c3aed",
+};
+const METODO_ABBR: Record<string, string> = {
+  Efectivo: "Efec",
+  Yape: "Yape",
+  Tarjeta: "Tarj",
+  "Depósito": "Dep",
+};
+const METODO_ORDER = ["Efectivo", "Yape", "Tarjeta", "Depósito"];
+
+/** Métodos de pago distintos usados en la atención, en orden fijo. */
+function metodosDe(a: Atencion): string[] {
+  const set = new Set((a.pagos ?? []).map((p) => p.metodo).filter(Boolean));
+  const conocidos = METODO_ORDER.filter((m) => set.has(m));
+  const otros = [...set].filter((m) => !METODO_ORDER.includes(m));
+  return [...conocidos, ...otros];
+}
+
 const fechaCorta = new Intl.DateTimeFormat("es-PE", { day: "2-digit", month: "short" });
 const horaCorta = new Intl.DateTimeFormat("es-PE", { hour: "2-digit", minute: "2-digit" });
 
@@ -154,6 +177,7 @@ export function AtencionesList() {
                 <TableHead className="text-xs text-right">Total</TableHead>
                 <TableHead className="text-xs text-right hidden sm:table-cell">Saldo</TableHead>
                 <TableHead className="text-xs">Estado</TableHead>
+                <TableHead className="text-xs">Pago</TableHead>
                 <TableHead />
               </TableRow>
             </TableHeader>
@@ -165,6 +189,7 @@ export function AtencionesList() {
                 const saldo = Number(a.saldo);
                 const color = anulada ? "#64748b" : (ESTADO_COLOR[a.estado] ?? "#64748b");
                 const puedeEditar = !anulada && (isToday(a.fecha) || roleId === 1);
+                const metodos = anulada ? [] : metodosDe(a);
                 return (
                   <TableRow key={a.id} className={cn("cursor-pointer", anulada && "opacity-55")} onClick={() => router.push(`/movimientos/atenciones/${a.id}`)}>
                     <TableCell>
@@ -202,6 +227,27 @@ export function AtencionesList() {
                       <span className="inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium" style={{ backgroundColor: `color-mix(in srgb, ${color} 14%, transparent)`, color }}>
                         {anulada ? "Anulada" : a.estado}
                       </span>
+                    </TableCell>
+                    <TableCell>
+                      {metodos.length === 0 ? (
+                        <span className="text-muted-foreground">—</span>
+                      ) : (
+                        <div className="flex flex-wrap gap-1">
+                          {metodos.map((m) => {
+                            const mc = METODO_COLOR[m] ?? "#64748b";
+                            return (
+                              <span
+                                key={m}
+                                title={m}
+                                className="inline-flex rounded-md px-1.5 py-0.5 text-[11px] font-medium"
+                                style={{ backgroundColor: `color-mix(in srgb, ${mc} 14%, transparent)`, color: mc }}
+                              >
+                                {METODO_ABBR[m] ?? m}
+                              </span>
+                            );
+                          })}
+                        </div>
+                      )}
                     </TableCell>
                     <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                       <DropdownMenu>
