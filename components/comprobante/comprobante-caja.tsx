@@ -47,7 +47,7 @@ export function ComprobanteCaja({ id }: { id: number }) {
     );
   }
 
-  const { caja, resumen, pagos, gastos } = data;
+  const { caja, resumen, gastos } = data;
   const porTipo = Object.entries(data.porTipoServicio ?? {}).sort((a, b) => b[1] - a[1]);
   const arqueo = caja.arqueo;
   const cerrada = caja.estado === "Cerrada";
@@ -168,27 +168,9 @@ export function ComprobanteCaja({ id }: { id: number }) {
             </Sec>
           )}
 
-          {/* Movimientos: ingresos */}
-          <Sec title={`Ingresos del turno (${pagos.length})`}>
-            {pagos.length === 0 ? <div style={{ fontSize: 12 }}>Sin pagos.</div> : (
-              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11.5 }}>
-                <thead><tr style={{ textAlign: "left", color: "#7c8794" }}>
-                  <th style={{ padding: "3px 4px" }}>Fecha</th><th>Paciente</th><th>Tipo</th><th>Método</th><th style={{ textAlign: "right" }}>Monto</th>
-                </tr></thead>
-                <tbody>
-                  {pagos.map((p) => (
-                    <tr key={p.id} style={{ borderTop: "1px solid #eef0f3", textDecoration: p.anulado ? "line-through" : "none", color: p.anulado ? "#9aa2ad" : "inherit" }}>
-                      <td style={{ padding: "3px 4px" }}>{fechaHora(p.fecha)}</td>
-                      <td>{p.atencion?.paciente ? `${p.atencion.paciente.nombres} ${p.atencion.paciente.apellidos}` : "—"}</td>
-                      <td>{p.tipo === "COBRO" ? "Cobro" : "Abono"}</td>
-                      <td>{p.metodo}</td>
-                      <td style={{ textAlign: "right" }}>{formatPEN(n(p.monto))}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
-          </Sec>
+          {/* El detalle pago-por-pago de ingresos NO va en el PDF (mucha información);
+              queda el acumulado en "Resumen del turno" y "Por tipo de servicio".
+              El detalle completo sigue disponible en la vista de reportes. */}
 
           {/* Movimientos: gastos */}
           <Sec title={`Gastos del turno (${gastos.length})`}>
