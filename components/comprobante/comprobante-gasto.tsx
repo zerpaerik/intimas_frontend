@@ -46,7 +46,7 @@ export function ComprobanteGasto({ id }: { id: number }) {
       </div>
 
       <div id="ticket" className="bg-white shadow-sm print:shadow-none" style={{ width: "80mm" }}>
-        <div style={{ padding: "5mm 4mm", fontSize: 12, lineHeight: 1.45, color: "#1f2937" }}>
+        <div style={{ padding: "5mm 4mm", fontSize: 12, lineHeight: 1.45, fontWeight: 700, color: "#1f2937" }}>
           {/* Encabezado */}
           <div style={{ textAlign: "center" }}>
             <Image src="/brand/logobn.jpeg" alt="Valmedic" width={140} height={56} className="mx-auto h-10 w-auto object-contain" />
@@ -77,7 +77,7 @@ export function ComprobanteGasto({ id }: { id: number }) {
 
           <Hr />
           <div style={{ color: "#6b7280", fontSize: 11 }}>Concepto</div>
-          <div style={{ fontWeight: 500, overflowWrap: "anywhere" }}>{g.descripcion}</div>
+          <div style={{ fontWeight: 700, overflowWrap: "anywhere" }}>{g.descripcion}</div>
           {g.nota && <div style={{ color: "#6b7280", overflowWrap: "anywhere" }}>{g.nota}</div>}
 
           <Hr />

@@ -70,7 +70,7 @@ export function ComprobanteResultado({ id }: { id: number }) {
           {/* Membrete */}
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, borderBottom: `2px solid ${ACCENT}`, paddingBottom: 10 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <Image src="/brand/logobn.jpeg" alt="Valmedic" width={120} height={52} style={{ height: 46, width: "auto", objectFit: "contain" }} />
+              <Image src="/brand/logo.jpeg" alt="Valmedic" width={240} height={104} style={{ height: 72, width: "auto", objectFit: "contain" }} />
               <div style={{ fontSize: 11, color: "#6b6168" }}>
                 <div style={{ fontSize: 13, fontWeight: 500, color: "#2c2c2a" }}>Policlínico Valmedic</div>
                 <div>Servicio de {r.categoria === "Laboratorio" ? "Laboratorio Clínico" : "Ecografía e Imágenes"}</div>

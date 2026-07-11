@@ -161,8 +161,6 @@ export function PediatriaForm({ consulta }: { consulta: Consulta }) {
                 </Select>
               </Campo>
               <Campo label="Ingreso por servicio de"><Input value={g("servicioIngreso")} onChange={(e) => set("servicioIngreso", e.target.value)} /></Campo>
-              <Campo label="Referido de"><Input value={g("referido")} onChange={(e) => set("referido", e.target.value)} /></Campo>
-              <Campo label="Cama / N° HC"><Input value={g("cama")} onChange={(e) => set("cama", e.target.value)} /></Campo>
             </CardContent>
           </Card>
 
@@ -170,8 +168,8 @@ export function PediatriaForm({ consulta }: { consulta: Consulta }) {
           <Card>
             <CardHeader><CardTitle>Enfermedad actual</CardTitle></CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 gap-x-5 gap-y-4 sm:grid-cols-3">
-                <Campo label="Motivo de consulta"><Input value={g("motivoConsulta")} onChange={(e) => set("motivoConsulta", e.target.value)} /></Campo>
+              <Campo label="Motivo de consulta"><Textarea value={g("motivoConsulta")} onChange={(e) => set("motivoConsulta", e.target.value)} rows={3} placeholder="Motivo por el que acude (puede ser texto amplio)" /></Campo>
+              <div className="grid grid-cols-1 gap-x-5 gap-y-4 sm:grid-cols-2">
                 <Campo label="Tiempo de enfermedad"><Input value={g("tiempoEnfermedad")} onChange={(e) => set("tiempoEnfermedad", e.target.value)} placeholder="Ej. 3 días" /></Campo>
                 <Campo label="Forma de inicio"><Input value={g("formaInicio")} onChange={(e) => set("formaInicio", e.target.value)} placeholder="Brusco / insidioso" /></Campo>
               </div>
@@ -202,12 +200,11 @@ export function PediatriaForm({ consulta }: { consulta: Consulta }) {
             </CardContent>
           </Card>
 
-          {/* 4-5 · Familiares y socioeconómicos */}
+          {/* 4 · Antecedentes familiares */}
           <Card>
-            <CardHeader><CardTitle>Antecedentes familiares y socioeconómicos</CardTitle></CardHeader>
-            <CardContent className="grid grid-cols-1 gap-x-5 gap-y-4 sm:grid-cols-2">
+            <CardHeader><CardTitle>Antecedentes familiares</CardTitle></CardHeader>
+            <CardContent>
               <Campo label="Familiares"><Textarea value={g("antFamiliares")} onChange={(e) => set("antFamiliares", e.target.value)} rows={3} placeholder="Diabetes, HTA, asma, alergias, TBC, epilepsia, etc." /></Campo>
-              <Campo label="Socioeconómicos / entorno"><Textarea value={g("antSocioeconomicos")} onChange={(e) => set("antSocioeconomicos", e.target.value)} rows={3} placeholder="Vivienda, servicios básicos, dinámica familiar, persona que cuida al niño" /></Campo>
             </CardContent>
           </Card>
 

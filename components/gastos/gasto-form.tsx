@@ -105,12 +105,15 @@ function Form({ initial }: { initial?: Gasto }) {
           </div>
           <div className="space-y-1.5">
             <Label>Categoría</Label>
-            <Select value={categoria} onValueChange={setCategoria}>
-              <SelectTrigger className="w-full"><SelectValue placeholder="Selecciona…" /></SelectTrigger>
-              <SelectContent>
-                {CATEGORIAS_GASTO.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-              </SelectContent>
-            </Select>
+            <Input
+              list="categorias-gasto"
+              value={categoria}
+              onChange={(e) => setCategoria(e.target.value)}
+              placeholder="Elige una o escribe una nueva…"
+            />
+            <datalist id="categorias-gasto">
+              {CATEGORIAS_GASTO.map((c) => <option key={c} value={c} />)}
+            </datalist>
           </div>
           <div className="space-y-1.5">
             <Label>Método de pago</Label>

@@ -103,8 +103,6 @@ export function ComprobantePediatria({ id }: { id: number }) {
               <Field label="Procedencia" value={h.procedencia} />
               <Field label="Condición / seguro" value={h.seguro} />
               <Field label="Ingreso por servicio" value={h.servicioIngreso} />
-              <Field label="Referido de" value={h.referido} />
-              <Field label="Cama / N° HC" value={h.cama} />
             </div>
           </Sec>
 
@@ -138,10 +136,9 @@ export function ComprobantePediatria({ id }: { id: number }) {
             <Bloque label="Patológicos" value={h.antPatologicos} />
           </Sec>
 
-          {/* 4-5 Familiares y socioeconómicos */}
-          <Sec n={4} title="Antecedentes familiares y socioeconómicos">
+          {/* 4 Antecedentes familiares */}
+          <Sec n={4} title="Antecedentes familiares">
             <Bloque label="Familiares" value={h.antFamiliares} />
-            <Bloque label="Socioeconómicos / entorno" value={h.antSocioeconomicos} />
           </Sec>
 
           {/* 7 Examen físico */}
