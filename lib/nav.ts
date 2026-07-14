@@ -10,6 +10,7 @@ import {
   HandCoins,
   KeyRound,
   LayoutDashboard,
+  MessagesSquare,
   MonitorSmartphone,
   NotebookPen,
   PackageOpen,
@@ -51,6 +52,13 @@ export const NAV: NavGroup[] = [
         roles: ALL,
         built: true,
       },
+      {
+        label: "Mensajes",
+        href: "/mensajes",
+        icon: MessagesSquare,
+        roles: ALL,
+        built: true,
+      },
     ],
   },
   {
@@ -78,7 +86,7 @@ export const NAV: NavGroup[] = [
       { label: "Caja", href: "/caja", icon: Wallet, roles: [1, 2, 7], built: true },
       { label: "Atenciones", href: "/movimientos/atenciones", icon: ClipboardPlus, roles: [1, 2, 7], built: true },
       { label: "Gastos", href: "/movimientos/gastos", icon: Receipt, roles: [1, 2, 7], built: true },
-      { label: "Otros Ingresos", href: "/movimientos/ingresos", icon: Banknote, roles: [1, 2, 7] },
+      { label: "Otros Ingresos", href: "/movimientos/ingresos", icon: Banknote, roles: [1, 2, 7], built: true },
       { label: "Cuentas por Cobrar", href: "/movimientos/cobrar", icon: HandCoins, roles: [1, 2, 7], built: true },
       // Ocultados temporalmente:
       // { label: "Historial de Cobros", href: "/movimientos/historial-cobros", icon: History, roles: [1, 2, 7] },
