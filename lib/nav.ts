@@ -14,13 +14,10 @@ import {
   NotebookPen,
   PackageOpen,
   Receipt,
-  ShieldPlus,
   Stethoscope,
-  StickyNote,
   TestTubeDiagonal,
   UserRound,
   Users,
-  Warehouse,
   type LucideIcon,
 } from "lucide-react";
 import type { RoleId } from "./auth/roles";
@@ -129,6 +126,7 @@ export const NAV: NavGroup[] = [
       { label: "Ver Controles", href: "/consultas/controles", icon: NotebookPen, roles: [1, 2, 7, 10], built: true },
     ],
   },
+  /* Quitado a pedido del cliente:
   {
     id: "metodos",
     label: "Métodos Anticonceptivos",
@@ -137,6 +135,7 @@ export const NAV: NavGroup[] = [
       { label: "Pacientes por Llamar", href: "/metodos/por-llamar", icon: ShieldPlus, roles: [1, 2, 7, 10] },
     ],
   },
+  */
   /* Ocultado temporalmente:
   {
     id: "visitador",
@@ -149,6 +148,7 @@ export const NAV: NavGroup[] = [
     ],
   },
   */
+  /* Quitado a pedido del cliente:
   {
     id: "existencias",
     label: "Existencias",
@@ -158,6 +158,7 @@ export const NAV: NavGroup[] = [
       { label: "Ventas", href: "/existencias/ventas", icon: Warehouse, roles: [1] },
     ],
   },
+  */
   {
     id: "reportes",
     label: "Reportes",
@@ -180,6 +181,7 @@ export const NAV: NavGroup[] = [
     ],
   },
   */
+  /* Quitado a pedido del cliente:
   {
     id: "anotaciones",
     label: "Anotaciones",
@@ -187,6 +189,7 @@ export const NAV: NavGroup[] = [
       { label: "Lista", href: "/anotaciones", icon: StickyNote, roles: [1, 7, 10] },
     ],
   },
+  */
   {
     id: "administrativo",
     label: "Administrativo",
