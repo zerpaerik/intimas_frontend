@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Building2, CalendarDays, FileDown, Layers, TriangleAlert } from "lucide-react";
+import { Building2, CalendarDays, FileDown, FileSpreadsheet, Layers, TriangleAlert } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,6 +17,7 @@ import { cn } from "@/lib/utils";
 import { formatPEN, formatDate } from "@/lib/format";
 import { useApiItem } from "@/lib/api/hooks";
 import { SEDES } from "@/lib/auth/roles";
+import { downloadCSV } from "@/lib/export/csv";
 
 interface DetalleRow {
   atencionId: number;
@@ -72,6 +73,15 @@ export function ReporteDetallado() {
     [data],
   );
 
+  function exportarExcel() {
+    if (!data) return;
+    downloadCSV(
+      `detallado_${desde}_a_${hasta}`,
+      ["Fecha", "Paciente", "Documento", "Tipo de servicio", "Concepto", "Método", "Sede", "Monto (S/)"],
+      data.rows.map((r) => [formatDate(r.fecha), r.paciente, r.numDoc ?? "", r.tipoServicio, r.concepto, r.metodos.join(" + "), r.sede ?? "", Number(r.monto).toFixed(2)]),
+    );
+  }
+
   return (
     <div>
       <p className="mb-2 text-sm text-muted-foreground">
@@ -82,9 +92,14 @@ export function ReporteDetallado() {
         title="Detallado por sede"
         description="Servicios prestados por tipo, con paciente, método de pago y sede."
         actions={
-          <Button variant="outline" onClick={() => window.open(`/reporte-pdf/detallado?desde=${desde}&hasta=${hasta}${sede !== "all" ? `&sedeId=${sede}` : ""}`, "_blank")}>
-            <FileDown className="h-4 w-4" /> PDF
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={exportarExcel} disabled={!data}>
+              <FileSpreadsheet className="h-4 w-4" /> Excel
+            </Button>
+            <Button variant="outline" onClick={() => window.open(`/reporte-pdf/detallado?desde=${desde}&hasta=${hasta}${sede !== "all" ? `&sedeId=${sede}` : ""}`, "_blank")}>
+              <FileDown className="h-4 w-4" /> PDF
+            </Button>
+          </div>
         }
       />
 

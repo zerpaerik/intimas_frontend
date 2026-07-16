@@ -173,10 +173,11 @@ export const NAV: NavGroup[] = [
     items: [
       { label: "Reporte de Ingresos", href: "/reportes/total", icon: BarChartBig, roles: [1, 2], built: true },
       { label: "Detallado por Sede", href: "/reportes/detallado", icon: BarChartBig, roles: [1, 2], built: true },
+      { label: "Producción por Servicio", href: "/reportes/por-servicio", icon: BarChartBig, roles: [1, 2], built: true },
+      { label: "Producción por Profesional", href: "/reportes/produccion", icon: BarChartBig, roles: [1, 2], built: true },
       // { label: "Detallado Sede C", href: "/reportes/detallado-c", icon: BarChartBig, roles: [1, 12] },
       { label: "Cierre de Caja", href: "/reportes/cierre-caja", icon: BarChartBig, roles: [1, 2, 7], built: true },
       { label: "Historial de Pacientes", href: "/reportes/historial-pacientes", icon: BarChartBig, roles: [1, 2, 7, 10] },
-      { label: "Producción", href: "/reportes/produccion", icon: BarChartBig, roles: [1, 2] },
     ],
   },
   /* Ocultado temporalmente:

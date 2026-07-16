@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { CalendarDays, FileDown, TrendingUp, TriangleAlert, Wallet } from "lucide-react";
+import { CalendarDays, FileDown, FileSpreadsheet, TrendingUp, TriangleAlert, Wallet } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,6 +15,7 @@ import { formatPEN, formatDate } from "@/lib/format";
 import { useApiItem } from "@/lib/api/hooks";
 import { useSedeFiltro } from "@/lib/auth/store";
 import { METODOS_PAGO } from "@/lib/api/atenciones";
+import { downloadCSV } from "@/lib/export/csv";
 
 interface PagoRow {
   id: number;
@@ -55,6 +56,23 @@ export function IngresosReporte() {
   );
   const isHoy = desde === today && hasta === today;
 
+  function exportarExcel() {
+    if (!data) return;
+    downloadCSV(
+      `ingresos_${desde}_a_${hasta}`,
+      ["Fecha", "Paciente", "Tipo", "Método", "Sede", "Usuario", "Monto (S/)"],
+      data.pagos.map((p) => [
+        formatDate(p.fecha),
+        p.atencion?.paciente ? `${p.atencion.paciente.nombres} ${p.atencion.paciente.apellidos}`.trim() : "—",
+        p.tipo === "ABONO_INICIAL" ? "Abono inicial" : p.tipo === "OTRO_INGRESO" ? "Otro ingreso" : "Cobro",
+        p.metodo,
+        p.sede?.nombre ?? "",
+        p.usuario?.nombre ?? "",
+        Number(p.monto).toFixed(2),
+      ]),
+    );
+  }
+
   return (
     <div>
       <p className="mb-2 text-sm text-muted-foreground">
@@ -65,9 +83,14 @@ export function IngresosReporte() {
         title="Reporte de ingresos"
         description="Ingresos por método de pago en un rango de fechas."
         actions={
-          <Button variant="outline" onClick={() => window.open(`/reporte-pdf/ingresos?desde=${desde}&hasta=${hasta}`, "_blank")}>
-            <FileDown className="h-4 w-4" /> PDF
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={exportarExcel} disabled={!data}>
+              <FileSpreadsheet className="h-4 w-4" /> Excel
+            </Button>
+            <Button variant="outline" onClick={() => window.open(`/reporte-pdf/ingresos?desde=${desde}&hasta=${hasta}`, "_blank")}>
+              <FileDown className="h-4 w-4" /> PDF
+            </Button>
+          </div>
         }
       />
 
