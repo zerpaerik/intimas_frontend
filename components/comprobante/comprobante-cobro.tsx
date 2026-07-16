@@ -94,7 +94,7 @@ export function ComprobanteCobro({ atencionId, pagoId }: { atencionId: number; p
         </div>
       </div>
 
-      <style>{`@media print { .no-print { display: none !important; } @page { size: 80mm auto; margin: 0; } html, body { background: #fff !important; } #ticket { box-shadow: none !important; } }`}</style>
+      <style>{`#ticket, #ticket * { color: #000 !important; border-color: #000 !important; font-weight: 700 !important; } @media print { .no-print { display: none !important; } @page { size: 80mm auto; margin: 0; } html, body { background: #fff !important; } #ticket { box-shadow: none !important; } }`}</style>
     </div>
   );
 }
