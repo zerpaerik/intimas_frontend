@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { CalendarClock, ExternalLink, FileText, HandCoins, HeartPulse } from "lucide-react";
+import { CalendarClock, ExternalLink, FileText, HandCoins } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
@@ -30,16 +30,6 @@ const ESTADO_COLOR: Record<string, string> = {
   Parcial: "#f5a623",
   Pendiente: "#ef4444",
 };
-
-function Dato({ label, value }: { label: string; value?: string | null }) {
-  if (!value) return null;
-  return (
-    <div className="flex items-start justify-between gap-3 py-1.5">
-      <span className="shrink-0 text-xs text-muted-foreground">{label}</span>
-      <span className="min-w-0 max-w-[65%] text-right text-sm font-medium">{value}</span>
-    </div>
-  );
-}
 
 export function PatientHistory({ patient, onCobro }: { patient: Row; onCobro?: () => void }) {
   const nombre = `${patient.nombres ?? ""} ${patient.apellidos ?? ""}`.trim();
@@ -96,19 +86,7 @@ export function PatientHistory({ patient, onCobro }: { patient: Row; onCobro?: (
           </TabsList>
 
           <TabsContent value="resumen" className="px-1">
-            <div className="rounded-xl border bg-muted/30 p-3">
-              <p className="mb-1 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                <HeartPulse className="h-3.5 w-3.5 text-brand" /> Antecedentes
-              </p>
-              <Dato label="Alergias" value={h.antecedentes.alergias} />
-              <Dato label="Patológicos" value={h.antecedentes.antPatologicos} />
-              <Dato label="Familiares" value={h.antecedentes.antFamiliares} />
-              <Dato label="Grupo sanguíneo" value={h.antecedentes.grupoSanguineo} />
-              {!h.antecedentes.alergias && !h.antecedentes.antPatologicos && !h.antecedentes.grupoSanguineo && (
-                <p className="py-2 text-sm text-muted-foreground">Sin antecedentes registrados.</p>
-              )}
-            </div>
-            <div className="mt-3 grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-3">
               <div className="rounded-xl border p-3 text-center">
                 <p className="font-heading text-xl font-bold">{h.stats.atenciones}</p>
                 <p className="text-xs text-muted-foreground">Atenciones</p>
