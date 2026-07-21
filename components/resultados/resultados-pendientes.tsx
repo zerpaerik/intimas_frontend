@@ -148,14 +148,17 @@ export function ResultadosPendientes({ track }: { track: Track }) {
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-2">
-                        <Button
-                          size="sm"
-                          variant={esLab ? "outline" : "default"}
-                          className={cn(!esLab && "bg-brand-gradient text-white")}
-                          onClick={() => router.push(`/resultados/redactar/${r.itemId}`)}
-                        >
-                          <FilePenLine className="h-4 w-4" /> Redactar
-                        </Button>
+                        {/* Laboratorio: solo se adjunta el archivo del lab (no se redacta in-app). */}
+                        {!esLab && (
+                          <Button
+                            size="sm"
+                            variant="default"
+                            className="bg-brand-gradient text-white"
+                            onClick={() => router.push(`/resultados/redactar/${r.itemId}`)}
+                          >
+                            <FilePenLine className="h-4 w-4" /> Redactar
+                          </Button>
+                        )}
                         <UploadDialog
                           item={r}
                           onDone={refetch}
