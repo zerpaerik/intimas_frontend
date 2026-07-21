@@ -22,6 +22,9 @@ export interface CatalogItem {
   pediatrico?: boolean;
   gineco?: boolean;
   especialidad?: string;
+  /** Contenido del paquete (para expandir ecografías/análisis como ítems de resultado). */
+  paqueteServicios?: { nombre: string; tipo: string | null }[];
+  paqueteAnalisis?: { nombre: string }[];
 }
 
 const METODOS: CatalogItem[] = [
@@ -108,7 +111,15 @@ export function ItemPicker({
               value={`${p.nombre} paquete p${p.id}`}
               label={String(p.nombre)}
               precio={Number(p.precio)}
-              onSelect={() => add({ kind: "Paquete", nombre: String(p.nombre), precio: Number(p.precio) })}
+              onSelect={() =>
+                add({
+                  kind: "Paquete",
+                  nombre: String(p.nombre),
+                  precio: Number(p.precio),
+                  paqueteServicios: ((p.servicios as Row[] | undefined) ?? []).map((s) => ({ nombre: String(s.nombre), tipo: s.tipo != null ? String(s.tipo) : null })),
+                  paqueteAnalisis: ((p.analisis as Row[] | undefined) ?? []).map((a) => ({ nombre: String(a.nombre) })),
+                })
+              }
             />
           ))}
         </CommandGroup>

@@ -22,16 +22,12 @@ export const paquetes: ResourceConfig = {
   columns: [
     { key: "nombre", header: "Paquete", type: "primary", subKey: "_incluye" },
     { key: "precio", header: "Precio", type: "currency" },
-    { key: "porcentaje", header: "Margen", type: "percent", hideOnMobile: true },
     { key: "consultas", header: "Consultas", hideOnMobile: true },
-    { key: "controles", header: "Controles", hideOnMobile: true },
   ],
   fields: [
     { name: "nombre", label: "Nombre del paquete", type: "uppercase", required: true, span: 2 },
     { name: "precio", label: "Precio (S/)", type: "currency", required: true, span: 1 },
-    { name: "porcentaje", label: "Margen (%)", type: "percent", span: 1 },
     { name: "consultas", label: "N° de consultas", type: "number", span: 1 },
-    { name: "controles", label: "N° de controles", type: "number", span: 1 },
     { name: "servicios", label: "Servicios incluidos", type: "multiselect", optionsFrom: "servicios", span: 2 },
     { name: "analisis", label: "Análisis incluidos", type: "multiselect", optionsFrom: "analisis", span: 2 },
   ],

@@ -38,6 +38,9 @@ const KIND_COLOR: Record<string, string> = {
   Método: "#e6007e",
 };
 
+// Origen "Interno": solo personal que es profesional de salud (no recepción, seguridad, etc.).
+const ORIGEN_INTERNO_TIPOS = ["Especialista", "Prof. de Salud", "Tecnólogo"];
+
 interface LineItem {
   uid: number;
   kind: string;
@@ -50,6 +53,10 @@ interface LineItem {
   gineco?: boolean;
   especialidad?: string;
   especialistaId?: number;
+  /** uid de la línea del paquete al que pertenece (si es un ítem incluido). */
+  grupoUid?: number;
+  /** Ítem incluido en un paquete: sin costo, no editable, se genera para su resultado. */
+  incluido?: boolean;
 }
 interface PayLine { uid: number; monto: number; metodo: string }
 
@@ -96,10 +103,14 @@ function RegistroForm({ mode, initial }: { mode: "create" | "edit"; initial?: At
   const payUid = React.useRef(2);
   const pagosTouched = React.useRef(false);
 
-  const origenOptions =
-    origenTipo === "Interno"
-      ? personal.data.map((p) => `${p.nombres} ${p.apellidos}`)
-      : profesionales.data.map((p) => `${p.nombres} ${p.apellidos}`);
+  const origenOptions = React.useMemo(() => {
+    const base =
+      origenTipo === "Interno"
+        ? personal.data.filter((p) => ORIGEN_INTERNO_TIPOS.includes(String(p.tipo))).map((p) => `${p.nombres} ${p.apellidos}`)
+        : profesionales.data.map((p) => `${p.nombres} ${p.apellidos}`);
+    // Conserva el valor ya guardado aunque hoy quede fuera del filtro (ej. atención antigua).
+    return origenValor && !base.includes(origenValor) ? [origenValor, ...base] : base;
+  }, [origenTipo, personal.data, profesionales.data, origenValor]);
 
   const total = items.reduce((a, b) => a + (Number(b.monto) || 0), 0);
   const abonado = mode === "edit"
@@ -114,10 +125,10 @@ function RegistroForm({ mode, initial }: { mode: "create" | "edit"; initial?: At
   }, [total, mode]);
 
   function addItem(item: CatalogItem) {
-    setItems((prev) => [
-      ...prev,
-      {
-        uid: uid.current++,
+    setItems((prev) => {
+      const gid = uid.current++;
+      const base: LineItem = {
+        uid: gid,
         kind: item.kind,
         nombre: item.nombre,
         monto: item.precio,
@@ -127,12 +138,25 @@ function RegistroForm({ mode, initial }: { mode: "create" | "edit"; initial?: At
         pediatrico: item.pediatrico,
         gineco: item.gineco,
         especialidad: item.especialidad,
-      },
-    ]);
+      };
+      if (item.kind !== "Paquete") return [...prev, base];
+      // Expande el paquete: sus ecografías y análisis se agregan como ítems (S/0) para que
+      // generen su cola de resultados. El precio queda en la línea del paquete.
+      const esEco = (tipo?: string | null) => /cograf/i.test(tipo ?? "");
+      const hijos: LineItem[] = [];
+      for (const s of item.paqueteServicios ?? []) {
+        if (esEco(s.tipo)) hijos.push({ uid: uid.current++, kind: s.tipo || "Ecografía", nombre: s.nombre, monto: 0, grupoUid: gid, incluido: true });
+      }
+      for (const a of item.paqueteAnalisis ?? []) {
+        hijos.push({ uid: uid.current++, kind: "Laboratorio", nombre: a.nombre, monto: 0, grupoUid: gid, incluido: true });
+      }
+      return [...prev, base, ...hijos];
+    });
   }
   const patchItem = (id: number, patch: Partial<LineItem>) =>
     setItems((prev) => prev.map((it) => (it.uid === id ? { ...it, ...patch } : it)));
-  const removeItem = (id: number) => setItems((prev) => prev.filter((it) => it.uid !== id));
+  // Al quitar un paquete se quitan también sus ítems incluidos.
+  const removeItem = (id: number) => setItems((prev) => prev.filter((it) => it.uid !== id && it.grupoUid !== id));
 
   const patchPago = (id: number, patch: Partial<PayLine>) => {
     pagosTouched.current = true;
@@ -277,24 +301,31 @@ function RegistroForm({ mode, initial }: { mode: "create" | "edit"; initial?: At
                 {items.map((it) => {
                   const color = KIND_COLOR[it.kind] ?? "#64748b";
                   return (
-                    <div key={it.uid} className="rounded-xl border p-3">
+                    <div key={it.uid} className={cn("rounded-xl border p-3", it.incluido && "border-dashed bg-muted/30")}>
                       <div className="flex items-center gap-2">
                         <span className="rounded-full px-2 py-0.5 text-[11px] font-medium" style={{ backgroundColor: `color-mix(in srgb, ${color} 14%, transparent)`, color }}>
                           {it.kind}
                         </span>
                         <span className="flex-1 text-sm font-medium">
                           {it.nombre}
+                          {it.incluido && <span className="ml-1.5 rounded bg-brand/10 px-1.5 py-0.5 text-[10px] font-medium text-brand">incluido en paquete</span>}
                           {it.prenatal && <span className="ml-1.5 rounded bg-brand/10 px-1.5 py-0.5 text-[10px] font-medium text-brand">prenatal</span>}
                         </span>
-                        <div className="relative w-28">
-                          <span className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">S/</span>
-                          <Input type="number" value={it.monto} onChange={(e) => patchItem(it.uid, { monto: Number(e.target.value) })} className="h-9 pl-7 text-right" />
-                        </div>
-                        <button onClick={() => removeItem(it.uid)} className="text-muted-foreground transition-colors hover:text-destructive" aria-label="Quitar">
-                          <Trash2 className="h-4 w-4" />
-                        </button>
+                        {it.incluido ? (
+                          <span className="w-28 text-right text-xs text-muted-foreground">Sin costo</span>
+                        ) : (
+                          <>
+                            <div className="relative w-28">
+                              <span className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">S/</span>
+                              <Input type="number" value={it.monto} onChange={(e) => patchItem(it.uid, { monto: Number(e.target.value) })} className="h-9 pl-7 text-right" />
+                            </div>
+                            <button onClick={() => removeItem(it.uid)} className="text-muted-foreground transition-colors hover:text-destructive" aria-label="Quitar">
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </>
+                        )}
                       </div>
-                      {it.esConsulta && (
+                      {it.esConsulta && !it.incluido && (
                         <div className="mt-2.5 flex items-center gap-2">
                           <Stethoscope className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
                           <Select value={it.especialistaId ? String(it.especialistaId) : undefined} onValueChange={(v) => patchItem(it.uid, { especialistaId: v ? Number(v) : undefined })}>
