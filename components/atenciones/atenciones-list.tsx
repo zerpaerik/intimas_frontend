@@ -174,6 +174,7 @@ export function AtencionesList() {
                 <TableHead className="text-xs">Fecha</TableHead>
                 <TableHead className="text-xs">Paciente</TableHead>
                 <TableHead className="text-xs hidden md:table-cell">Detalle</TableHead>
+                <TableHead className="text-xs hidden lg:table-cell">Origen</TableHead>
                 <TableHead className="text-xs text-right">Total</TableHead>
                 <TableHead className="text-xs text-right hidden sm:table-cell">Saldo</TableHead>
                 <TableHead className="text-xs">Estado</TableHead>
@@ -215,6 +216,12 @@ export function AtencionesList() {
                           <span key={i} className="rounded-md bg-muted px-1.5 py-0.5 text-xs">{it.nombre}</span>
                         ))}
                         {a.items.length > 2 && <span className="text-xs text-muted-foreground">+{a.items.length - 2}</span>}
+                      </div>
+                    </TableCell>
+                    <TableCell className="hidden lg:table-cell">
+                      <div className="max-w-[12rem] truncate text-xs text-muted-foreground">
+                        <span className="font-medium text-foreground">{a.origenTipo}</span>
+                        {a.origenValor ? ` · ${a.origenValor}` : ""}
                       </div>
                     </TableCell>
                     <TableCell className="text-right font-medium tabular-nums">{formatPEN(Number(a.total))}</TableCell>
@@ -268,7 +275,7 @@ export function AtencionesList() {
                               <Pencil className="h-4 w-4" />Editar
                             </DropdownMenuItem>
                           )}
-                          {!anulada && (
+                          {!anulada && roleId !== 7 && (
                             <>
                               <DropdownMenuSeparator />
                               <DropdownMenuItem variant="destructive" onClick={() => setAnularTarget(a)}>

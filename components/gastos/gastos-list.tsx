@@ -18,7 +18,7 @@ import {
 import { cn } from "@/lib/utils";
 import { formatPEN } from "@/lib/format";
 import { useApiList } from "@/lib/api/hooks";
-import { useSedeFiltro } from "@/lib/auth/store";
+import { useAuth, useSedeFiltro } from "@/lib/auth/store";
 import { type Gasto } from "@/lib/api/gastos";
 import { AnularDialog } from "@/components/atenciones/anular-dialog";
 
@@ -32,6 +32,7 @@ function localDate(d: Date = new Date()) {
 export function GastosList() {
   const router = useRouter();
   const sedeId = useSedeFiltro();
+  const roleId = useAuth((s) => s.session?.roleId ?? 1);
   const { data: gastos, loading, error, refetch } = useApiList<Gasto>(`/gastos${sedeId ? `?sedeId=${sedeId}` : ""}`);
 
   const today = localDate();
@@ -169,10 +170,14 @@ export function GastosList() {
                               <DropdownMenuItem onClick={() => router.push(`/movimientos/gastos/${g.id}/editar`)}>
                                 <Pencil className="h-4 w-4" />Editar
                               </DropdownMenuItem>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem variant="destructive" onClick={() => setAnularTarget(g)}>
-                                <Ban className="h-4 w-4" />Anular
-                              </DropdownMenuItem>
+                              {roleId !== 7 && (
+                                <>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem variant="destructive" onClick={() => setAnularTarget(g)}>
+                                    <Ban className="h-4 w-4" />Anular
+                                  </DropdownMenuItem>
+                                </>
+                              )}
                             </>
                           )}
                         </DropdownMenuContent>

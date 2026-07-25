@@ -54,7 +54,6 @@ export function ComprobanteResultado({ id }: { id: number }) {
   const p = r.paciente;
   const nombre = `${p?.nombres ?? ""} ${p?.apellidos ?? ""}`.trim();
   const edad = p?.fechaNacimiento ? calcAge(String(p.fechaNacimiento)) : null;
-  const medico = r.profesional ? `${r.profesional.nombres} ${r.profesional.apellidos}`.trim() : "";
 
   return (
     <div className="min-h-screen bg-slate-100 py-8 print:bg-white print:py-0" style={{ color: "#2c2c2a", overflowWrap: "anywhere", wordBreak: "break-word" }}>
@@ -70,11 +69,12 @@ export function ComprobanteResultado({ id }: { id: number }) {
           {/* Membrete */}
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, borderBottom: `2px solid ${ACCENT}`, paddingBottom: 10 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <Image src="/brand/logo.jpeg" alt="Valmedic" width={240} height={104} style={{ height: 72, width: "auto", objectFit: "contain" }} />
+              <Image src="/brand/logo.jpeg" alt="Valmedic" width={240} height={104} style={{ height: 100, width: "auto", objectFit: "contain" }} />
               <div style={{ fontSize: 11, color: "#6b6168" }}>
                 <div style={{ fontSize: 13, fontWeight: 500, color: "#2c2c2a" }}>Policlínico Valmedic</div>
                 <div>Servicio de {r.categoria === "Laboratorio" ? "Laboratorio Clínico" : "Ecografía e Imágenes"}</div>
                 <div>RUC 20601234567</div>
+                <div>WhatsApp 903 166 787 · 988 556 478</div>
               </div>
             </div>
             <div style={{ textAlign: "right" }}>
@@ -105,16 +105,8 @@ export function ComprobanteResultado({ id }: { id: number }) {
             dangerouslySetInnerHTML={{ __html: r.informeHtml ?? "" }}
           />
 
-          {/* Firma */}
-          <div style={{ marginTop: 48, display: "flex", justifyContent: "flex-end" }}>
-            <div style={{ textAlign: "center", minWidth: 240 }}>
-              <div style={{ borderTop: "1px solid #2c2c2a", paddingTop: 4, fontSize: 12 }}>
-                <div style={{ fontWeight: 600 }}>{medico || " "}</div>
-                {r.profesional?.cmp && <div style={{ color: "#6b6168" }}>C.M.P. {r.profesional.cmp}</div>}
-                <div style={{ color: "#8a8088", fontSize: 11 }}>Médico responsable</div>
-              </div>
-            </div>
-          </div>
+          {/* Firma retirada a pedido del cliente: colocan sello/firma físicos encima. Se deja espacio para el sello. */}
+          <div style={{ height: 96 }} />
 
           <div style={{ marginTop: 16, textAlign: "center", fontSize: 10, color: "#a39aa0" }}>
             La ecografía y las pruebas rápidas son métodos de ayuda al diagnóstico, no concluyentes. Correlacionar con la clínica.

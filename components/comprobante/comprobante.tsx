@@ -62,6 +62,7 @@ export function Comprobante({ id }: { id: number }) {
             <div style={{ fontSize: 11, color: "#6b7280" }}>íntimas</div>
             <div style={{ fontSize: 11, color: "#6b7280" }}>{a.sede?.nombre ?? "Sede Principal"}</div>
             <div style={{ fontSize: 11, color: "#6b7280" }}>RUC 20601234567</div>
+            <div style={{ fontSize: 11, color: "#6b7280" }}>WhatsApp 903 166 787 · 988 556 478</div>
           </div>
 
           <Hr />

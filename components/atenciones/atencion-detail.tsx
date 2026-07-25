@@ -70,9 +70,11 @@ export function AtencionDetail({ id }: { id: number }) {
                     <Link href={`/movimientos/atenciones/${id}/editar`}><Pencil className="h-4 w-4" /><span className="hidden sm:inline">Editar</span></Link>
                   </Button>
                 )}
-                <Button variant="outline" className="text-destructive hover:text-destructive" onClick={() => setAnularOpen(true)}>
-                  <Ban className="h-4 w-4" /><span className="hidden sm:inline">Anular</span>
-                </Button>
+                {roleId !== 7 && (
+                  <Button variant="outline" className="text-destructive hover:text-destructive" onClick={() => setAnularOpen(true)}>
+                    <Ban className="h-4 w-4" /><span className="hidden sm:inline">Anular</span>
+                  </Button>
+                )}
               </>
             )}
           </>
