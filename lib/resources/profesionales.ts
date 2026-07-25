@@ -53,7 +53,7 @@ export const profesionales: ResourceConfig = {
   fields: [
     { name: "nombres", label: "Nombres", type: "uppercase", required: true, span: 1 },
     { name: "apellidos", label: "Apellidos", type: "uppercase", required: true, span: 1 },
-    { name: "cmp", label: "CMP (colegiatura)", type: "uppercase", span: 1 },
+    { name: "cmp", label: "Colegiatura (CMP / COP…)", type: "uppercase", span: 1 },
     { name: "nacimiento", label: "Fecha de nacimiento", type: "date", span: 1 },
     {
       name: "especialidad",

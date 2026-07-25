@@ -22,6 +22,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
+import { Switch } from "@/components/ui/switch";
 import { MultiSelect } from "@/components/forms/multi-select";
 import { CreatableCombobox } from "@/components/forms/creatable-combobox";
 import { cn } from "@/lib/utils";
@@ -46,6 +47,8 @@ function buildSchema(fields: FieldDef[], mode: "create" | "edit") {
       shape[f.name] = required
         ? z.string().min(1, "Requerido").email("Correo inválido")
         : z.string().refine((v) => v === "" || z.string().email().safeParse(v).success, "Correo inválido");
+    } else if (f.type === "boolean") {
+      shape[f.name] = z.boolean();
     } else {
       shape[f.name] = required ? z.string().min(1, "Requerido") : z.string();
     }
@@ -64,6 +67,8 @@ function buildDefaults(fields: FieldDef[], existing?: Row | null) {
     } else if (f.type === "date") {
       const v = existing?.[f.name];
       d[f.name] = v ? String(v).slice(0, 10) : "";
+    } else if (f.type === "boolean") {
+      d[f.name] = existing?.[f.name] === false ? false : true;
     } else {
       d[f.name] = existing?.[f.name] != null ? String(existing[f.name]) : "";
     }
@@ -215,6 +220,14 @@ function FormInner({
                             onChange={field.onChange}
                             placeholder={f.placeholder}
                           />
+                        );
+                      }
+                      if (f.type === "boolean") {
+                        return (
+                          <div className="flex items-center gap-2 pt-1">
+                            <Switch id={f.name} checked={!!field.value} onCheckedChange={field.onChange} />
+                            <span className="text-sm text-muted-foreground">{field.value ? "Activo" : "Inactivo"}</span>
+                          </div>
                         );
                       }
                       if (f.type === "textarea") {

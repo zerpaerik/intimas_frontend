@@ -14,7 +14,8 @@ export type FieldType =
   | "password"
   | "date"
   | "select"
-  | "multiselect";
+  | "multiselect"
+  | "boolean";
 
 export interface SelectOption {
   value: string;
