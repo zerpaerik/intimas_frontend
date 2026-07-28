@@ -2,6 +2,7 @@ import {
   Activity,
   BarChartBig,
   Banknote,
+  CalendarDays,
   Wallet,
   ClipboardPlus,
   Contact,
@@ -59,6 +60,13 @@ export const NAV: NavGroup[] = [
         roles: ALL,
         built: true,
       },
+    ],
+  },
+  {
+    id: "agenda",
+    label: "Agenda",
+    items: [
+      { label: "Citas", href: "/citas", icon: CalendarDays, roles: [1, 2, 7, 10], built: true },
     ],
   },
   {
