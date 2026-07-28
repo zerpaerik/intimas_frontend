@@ -64,7 +64,7 @@ export function ComprobanteHistoria({ id }: { id: number }) {
           {/* Encabezado */}
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, borderBottom: `2px solid ${accent}`, paddingBottom: 10 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <Image src="/brand/logobn.jpeg" alt="Valmedic" width={120} height={52} style={{ height: 46, width: "auto", objectFit: "contain" }} />
+              <Image src="/brand/logo.jpeg" alt="Valmedic" width={160} height={70} style={{ height: 64, width: "auto", objectFit: "contain" }} />
               <div style={{ fontSize: 11, color: "#6b6168" }}>
                 <div style={{ fontSize: 13, fontWeight: 500, color: "#2c2c2a" }}>Policlínico Valmedic</div>
                 <div>{gineco ? "Consultorio Femenino · Ginecología" : "Medicina General y Especialidades"}</div>
@@ -79,19 +79,18 @@ export function ComprobanteHistoria({ id }: { id: number }) {
 
           {/* 1 Filiación */}
           <Sec n={1} title="Filiación" accent={accent}>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
-              <Field label="Paciente" value={nombre} w="38%" />
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: "8px 16px" }}>
+              <div style={{ gridColumn: "span 2" }}><Field label="Paciente" value={nombre} /></div>
               <Field label="DNI" value={`${p?.tipoDoc ?? ""} ${p?.numDoc ?? ""}`.trim()} />
               <Field label="Sexo" value={p?.sexo} />
               <Field label="Edad" value={edad != null ? `${edad} años` : ""} />
-              <Field label="Fec. atención" value={formatDateLong(c.fecha)} />
               <Field label="N° celular" value={p?.telefono} />
-              {gineco && <Field label="Facebook" value={p?.facebook} />}
+              <div style={{ gridColumn: "span 2" }}><Field label="Fecha de atención" value={formatDateLong(c.fecha)} /></div>
             </div>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginTop: 8, borderTop: "1px dashed #e3dde0", paddingTop: 8 }}>
-              <Field label="Familiar" value={p?.familiarNombre} w="38%" />
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: "8px 16px", marginTop: 8, borderTop: "1px dashed #e3dde0", paddingTop: 8 }}>
+              <Field label="Familiar" value={p?.familiarNombre} />
               <Field label="Parentesco" value={p?.familiarParentesco} />
-              <Field label="DNI" value={p?.familiarDni} />
+              <Field label="DNI familiar" value={p?.familiarDni} />
             </div>
           </Sec>
 

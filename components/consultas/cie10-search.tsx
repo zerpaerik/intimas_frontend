@@ -49,10 +49,19 @@ export function Cie10Search({
         value={q}
         onChange={(e) => { setQ(e.target.value); setOpen(true); }}
         onFocus={() => setOpen(true)}
-        placeholder="Buscar CIE-10…"
+        onKeyDown={(e) => {
+          if (e.key === "Enter" && q.trim()) {
+            e.preventDefault();
+            const code = q.trim().toUpperCase();
+            onSelect(code, "");
+            setQ(code);
+            setOpen(false);
+          }
+        }}
+        placeholder="Buscar CIE-10 o escribe el código…"
         className="h-9 pl-8"
       />
-      {open && results.length > 0 && (
+      {open && (results.length > 0 || q.trim().length > 0) && (
         <div className="absolute z-50 mt-1 max-h-64 w-[min(28rem,90vw)] overflow-auto rounded-lg border bg-popover p-1 shadow-md">
           {results.map((c) => (
             <button
@@ -65,6 +74,16 @@ export function Cie10Search({
               <span className="text-muted-foreground">{c.descripcion}</span>
             </button>
           ))}
+          {q.trim().length > 0 && !results.some((c) => c.codigo.toLowerCase() === q.trim().toLowerCase()) && (
+            <button
+              type="button"
+              onClick={() => { const code = q.trim().toUpperCase(); onSelect(code, ""); setQ(code); setOpen(false); }}
+              className="mt-1 flex w-full items-center gap-2 rounded-md border-t px-2 pb-1.5 pt-2 text-left text-sm hover:bg-accent"
+            >
+              <span className="shrink-0 rounded bg-muted px-1.5 py-0.5 text-xs font-medium">Usar</span>
+              <span className="text-muted-foreground">«{q.trim().toUpperCase()}» como código (Enter)</span>
+            </button>
+          )}
         </div>
       )}
     </div>
