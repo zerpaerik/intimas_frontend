@@ -120,9 +120,9 @@ export const NAV: NavGroup[] = [
     label: "Resultados",
     items: [
       { label: "Pendientes — Ecografías", href: "/resultados/pendientes-servicio", icon: FileClock, roles: [1, 2, 7, 10], built: true },
-      { label: "Pendientes — Laboratorio", href: "/resultados/pendientes-laboratorio", icon: FileClock, roles: [1, 2, 7, 10], built: true },
+      { label: "Pendientes — Laboratorio", href: "/resultados/pendientes-laboratorio", icon: FileClock, roles: [1, 2, 7, 10, 13], built: true },
       { label: "Guardados — Ecografías", href: "/resultados/guardados-servicio", icon: FileCheck2, roles: [1, 2, 7, 10], built: true },
-      { label: "Guardados — Laboratorio", href: "/resultados/guardados-laboratorio", icon: FileCheck2, roles: [1, 2, 7, 10], built: true },
+      { label: "Guardados — Laboratorio", href: "/resultados/guardados-laboratorio", icon: FileCheck2, roles: [1, 2, 7, 10, 13], built: true },
     ],
   },
   {

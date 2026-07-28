@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { useAuth } from "@/lib/auth/store";
 import { AppShell } from "@/components/layout/app-shell";
@@ -25,12 +25,23 @@ export default function AppLayout({
   children: React.ReactNode;
 }) {
   const router = useRouter();
+  const pathname = usePathname();
   const session = useAuth((s) => s.session);
   const hydrated = useAuth((s) => s.hydrated);
 
   React.useEffect(() => {
-    if (hydrated && !session) router.replace("/login");
-  }, [hydrated, session, router]);
+    if (hydrated && !session) {
+      router.replace("/login");
+    } else if (
+      hydrated &&
+      session?.roleId === 13 &&
+      !pathname.startsWith("/resultados/pendientes-laboratorio") &&
+      !pathname.startsWith("/resultados/guardados-laboratorio")
+    ) {
+      // Rol Laboratorio: solo puede navegar a resultados de laboratorio.
+      router.replace("/resultados/pendientes-laboratorio");
+    }
+  }, [hydrated, session, pathname, router]);
 
   if (!hydrated || !session) return <Splash />;
 

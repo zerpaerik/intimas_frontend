@@ -41,7 +41,7 @@ export default function LoginPage() {
   const [showPw, setShowPw] = React.useState(false);
 
   React.useEffect(() => {
-    if (hydrated && session) router.replace("/dashboard");
+    if (hydrated && session) router.replace(session.roleId === 13 ? "/resultados/pendientes-laboratorio" : "/dashboard");
   }, [hydrated, session, router]);
 
   const {
@@ -58,7 +58,8 @@ export default function LoginPage() {
     try {
       await loginWithCredentials(v.email, v.password, Number(v.sedeId));
       toast.success("Sesión iniciada");
-      router.replace("/dashboard");
+      const rid = useAuth.getState().session?.roleId;
+      router.replace(rid === 13 ? "/resultados/pendientes-laboratorio" : "/dashboard");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "No se pudo iniciar sesión");
     }

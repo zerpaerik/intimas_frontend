@@ -3,7 +3,7 @@
  * Los IDs de rol coinciden con los del sistema real (1, 2, 7, 10, 11, 12).
  */
 
-export type RoleId = 1 | 2 | 7 | 10 | 11 | 12;
+export type RoleId = 1 | 2 | 7 | 10 | 11 | 12 | 13;
 
 export interface Role {
   id: RoleId;
@@ -57,10 +57,22 @@ export const ROLES: Role[] = [
     description: "ROL C",
     color: "#9b2d69",
   },
+  {
+    id: 13,
+    name: "Laboratorio",
+    short: "Lab",
+    description: "Solo resultados de laboratorio",
+    color: "#d97706",
+  },
 ];
 
 export function getRole(id: RoleId): Role {
   return ROLES.find((r) => r.id === id) ?? ROLES[0];
+}
+
+/** Página de inicio por rol. El rol Laboratorio (13) solo entra a resultados de laboratorio. */
+export function homeForRole(roleId: RoleId): string {
+  return roleId === 13 ? "/resultados/pendientes-laboratorio" : "/dashboard";
 }
 
 export interface Sede {
