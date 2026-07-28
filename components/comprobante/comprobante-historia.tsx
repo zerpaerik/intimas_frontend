@@ -166,8 +166,8 @@ export function ComprobanteHistoria({ id }: { id: number }) {
           {/* Datos del profesional */}
           <Sec title="Datos del profesional" accent={accent}>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
-              <Field label="Profesional" value={e ? `${e.nombres} ${e.apellidos}` : ""} w="34%" />
-              <Field label="Colegio profesional" value={e?.cmp} />
+              <Field label="Profesional" value={h.usuario?.nombre || (e ? `${e.nombres} ${e.apellidos}` : "")} w="34%" />
+              <Field label="Colegiatura" value={h.usuario?.colegiatura || e?.cmp} />
               <Field label="Consultorio" value={e?.consultorio} />
               <Field label="Turno" value={e?.turno} />
               <Field label="Código pers. de salud" value={e?.codigoSalud} />

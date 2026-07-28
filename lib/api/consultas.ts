@@ -54,6 +54,7 @@ export interface HistoriaClinica {
   consultaId: number;
   pacienteId: number;
   especialistaId?: number | null;
+  usuario?: { nombre?: string | null; title?: string | null; colegiatura?: string | null } | null;
   fecha: string;
   enfInicio?: string | null;
   enfCurso?: string | null;

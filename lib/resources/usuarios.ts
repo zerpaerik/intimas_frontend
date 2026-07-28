@@ -40,6 +40,7 @@ export const usuarios: ResourceConfig = {
       help: "Mínimo 4 caracteres. Para cambiarla luego, edita desde aquí.",
     },
     { name: "roleId", label: "Rol", type: "select", required: true, numeric: true, span: 2, options: roleOptions },
+    { name: "colegiatura", label: "Colegiatura (CMP / COP…)", type: "uppercase", span: 2, help: "Solo profesionales de salud: se imprime en la historia que llene este usuario." },
     {
       name: "activo",
       label: "Usuario activo",
