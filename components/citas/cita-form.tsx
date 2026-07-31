@@ -11,12 +11,14 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { cn } from "@/lib/utils";
 import { api } from "@/lib/api/client";
 import { useApiList } from "@/lib/api/hooks";
 import { useAuth } from "@/lib/auth/store";
 import { METODOS_PAGO } from "@/lib/api/atenciones";
 import type { Row } from "@/lib/resources/types";
 import type { Cita } from "@/lib/api/citas";
+import type { Slot } from "@/lib/api/agenda";
 import { PatientSearch } from "@/components/atenciones/patient-search";
 
 function isoToday() {
@@ -33,7 +35,8 @@ export function CitaForm() {
   const [patient, setPatient] = React.useState<Row | null>(null);
   const [medicoId, setMedicoId] = React.useState("");
   const [fecha, setFecha] = React.useState(isoToday);
-  const [hora, setHora] = React.useState("09:00");
+  const [hora, setHora] = React.useState("");
+  const [manual, setManual] = React.useState(false);
   const [motivo, setMotivo] = React.useState("");
   const [monto, setMonto] = React.useState("");
   const [metodoPago, setMetodoPago] = React.useState("Efectivo");
@@ -41,10 +44,12 @@ export function CitaForm() {
   const [observaciones, setObservaciones] = React.useState("");
   const [saving, setSaving] = React.useState(false);
 
+  const { data: slots } = useApiList<Slot>(medicoId && fecha ? `/agenda/slots?medicoId=${medicoId}&fecha=${fecha}` : null);
+
   async function guardar() {
     if (!patient) return toast.error("Selecciona el paciente.");
     if (!medicoId) return toast.error("Selecciona el médico.");
-    if (!fecha || !hora) return toast.error("Indica fecha y hora.");
+    if (!fecha || !hora) return toast.error("Elige un turno u hora para la cita.");
     setSaving(true);
     try {
       await api.post<Cita>("/citas", {
@@ -88,7 +93,7 @@ export function CitaForm() {
         <section className="grid gap-4 rounded-2xl border bg-card p-5 sm:grid-cols-2">
           <div className="space-y-1.5">
             <Label>Médico</Label>
-            <Select value={medicoId} onValueChange={setMedicoId}>
+            <Select value={medicoId} onValueChange={(v) => { setMedicoId(v); setHora(""); }}>
               <SelectTrigger><SelectValue placeholder="Selecciona el médico…" /></SelectTrigger>
               <SelectContent>
                 {medicos.length === 0 && (
@@ -102,14 +107,55 @@ export function CitaForm() {
             <Label>Motivo (opcional)</Label>
             <Input value={motivo} onChange={(e) => setMotivo(e.target.value)} placeholder="Ecografía, consulta…" />
           </div>
-          <div className="space-y-1.5">
+          <div className="space-y-1.5 sm:col-span-2">
             <Label>Fecha</Label>
-            <Input type="date" value={fecha} onChange={(e) => setFecha(e.target.value)} />
+            <Input type="date" value={fecha} onChange={(e) => { setFecha(e.target.value); setHora(""); }} className="sm:w-1/2" />
           </div>
-          <div className="space-y-1.5">
-            <Label>Hora</Label>
-            <Input type="time" value={hora} onChange={(e) => setHora(e.target.value)} />
-          </div>
+        </section>
+
+        {/* Turno */}
+        <section className="rounded-2xl border bg-card p-5">
+          <Label className="mb-2 block">Turno</Label>
+          {!medicoId || !fecha ? (
+            <p className="text-sm text-muted-foreground">Elige médico y fecha para ver los turnos disponibles.</p>
+          ) : (
+            <>
+              {slots.length > 0 ? (
+                <div className="flex flex-wrap gap-2">
+                  {slots.map((s) => (
+                    <button
+                      key={s.hora}
+                      type="button"
+                      disabled={s.ocupado}
+                      onClick={() => { setHora(s.hora); setManual(false); }}
+                      className={cn(
+                        "rounded-lg border px-3 py-1.5 text-sm tabular-nums transition-colors",
+                        s.ocupado
+                          ? "cursor-not-allowed bg-muted text-muted-foreground line-through"
+                          : hora === s.hora && !manual
+                            ? "border-brand bg-brand/10 text-brand"
+                            : "hover:bg-accent/50",
+                      )}
+                    >
+                      {s.hora}
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">Este médico no tiene horario cargado ese día. Puedes agendar un horario adicional.</p>
+              )}
+              <button type="button" onClick={() => setManual((v) => !v)} className="mt-3 text-xs font-medium text-brand hover:underline">
+                {manual ? "Elegir de los turnos" : "Agendar en otro horario (adicional)"}
+              </button>
+              {(manual || slots.length === 0) && (
+                <div className="mt-2 flex items-center gap-2">
+                  <Input type="time" value={hora} onChange={(e) => { setHora(e.target.value); setManual(true); }} className="w-40" />
+                  <span className="text-xs text-muted-foreground">Fuera de la agenda del médico.</span>
+                </div>
+              )}
+              {hora && <p className="mt-3 text-sm">Turno: <strong className="tabular-nums">{hora}</strong></p>}
+            </>
+          )}
         </section>
 
         <section className="grid gap-4 rounded-2xl border bg-card p-5 sm:grid-cols-2">

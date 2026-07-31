@@ -3,6 +3,7 @@ import {
   BarChartBig,
   Banknote,
   CalendarDays,
+  CalendarClock,
   Wallet,
   ClipboardPlus,
   Contact,
@@ -67,6 +68,7 @@ export const NAV: NavGroup[] = [
     label: "Agenda",
     items: [
       { label: "Citas", href: "/citas", icon: CalendarDays, roles: [1, 2, 7, 10], built: true },
+      { label: "Horario médico", href: "/citas/horario", icon: CalendarClock, roles: [1, 2, 7, 10], built: true },
     ],
   },
   {
