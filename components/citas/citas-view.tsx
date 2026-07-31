@@ -7,12 +7,16 @@ import {
 } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { formatPEN } from "@/lib/format";
 import { api } from "@/lib/api/client";
 import { useApiList } from "@/lib/api/hooks";
 import { useSedeFiltro } from "@/lib/auth/store";
+import { METODOS_PAGO } from "@/lib/api/atenciones";
 import { type Cita, CITA_ESTADO_COLOR } from "@/lib/api/citas";
 import type { Row } from "@/lib/resources/types";
 
@@ -74,11 +78,25 @@ export function CitasView() {
   const selCitas = byDay.get(selected) ?? [];
   const monthLabel = cursor.toLocaleDateString("es-PE", { month: "long", year: "numeric" });
 
+  const [abonoTarget, setAbonoTarget] = React.useState<Cita | null>(null);
+  const [abonoMonto, setAbonoMonto] = React.useState("");
+  const [abonoMetodo, setAbonoMetodo] = React.useState("Efectivo");
+
   async function marcar(c: Cita, estado: string) {
     try { await api.post(`/citas/${c.id}/estado`, { estado }); refetch(); } catch { /* noop */ }
   }
-  async function cobrar(c: Cita) {
-    try { await api.post(`/citas/${c.id}/pago`, {}); refetch(); } catch { /* noop */ }
+  function abrirCobro(c: Cita) {
+    setAbonoTarget(c);
+    setAbonoMonto(String(Math.max(0, Number(c.monto) - Number(c.pagado ?? 0))));
+    setAbonoMetodo(c.metodoPago || "Efectivo");
+  }
+  async function registrarAbono() {
+    if (!abonoTarget) return;
+    try {
+      await api.post(`/citas/${abonoTarget.id}/abono`, { monto: Number(abonoMonto) || 0, metodoPago: abonoMetodo });
+      setAbonoTarget(null);
+      refetch();
+    } catch { /* noop */ }
   }
 
   return (
@@ -165,7 +183,8 @@ export function CitasView() {
           ) : (
             <div className="divide-y">
               {selCitas.map((c) => {
-                const pendiente = c.estadoPago !== "Pagado" && Number(c.monto) > 0;
+                const saldo = Number(c.monto) - Number(c.pagado ?? 0);
+                const pendiente = saldo > 0.001;
                 const cerrada = c.estado === "Asistió" || c.estado === "No asistió" || c.estado === "Cancelada";
                 return (
                   <div key={c.id} className="p-3">
@@ -183,9 +202,9 @@ export function CitasView() {
                       <div className="text-right">
                         {Number(c.monto) > 0 && <div className="text-sm font-medium tabular-nums">{formatPEN(Number(c.monto))}</div>}
                         {pendiente ? (
-                          <span className="text-[11px] font-medium text-destructive">Pago pendiente</span>
+                          <span className="text-[11px] font-medium text-destructive">Saldo {formatPEN(saldo)}</span>
                         ) : Number(c.monto) > 0 ? (
-                          <span className="text-[11px] font-medium text-success">Pagado</span>
+                          <span className="text-[11px] font-medium text-success">Pagada</span>
                         ) : null}
                       </div>
                     </div>
@@ -197,7 +216,7 @@ export function CitasView() {
                           <Button size="sm" variant="outline" className="h-7 text-muted-foreground" onClick={() => marcar(c, "Cancelada")}><Ban className="h-3.5 w-3.5" /> Cancelar</Button>
                         </>
                       )}
-                      {pendiente && <Button size="sm" className="h-7 bg-brand-gradient text-white" onClick={() => cobrar(c)}><HandCoins className="h-3.5 w-3.5" /> Cobrar</Button>}
+                      {pendiente && <Button size="sm" className="h-7 bg-brand-gradient text-white" onClick={() => abrirCobro(c)}><HandCoins className="h-3.5 w-3.5" /> Cobrar</Button>}
                     </div>
                   </div>
                 );
@@ -206,6 +225,34 @@ export function CitasView() {
           )}
         </div>
       </div>
+
+      <Dialog open={!!abonoTarget} onOpenChange={(o) => !o && setAbonoTarget(null)}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Registrar abono</DialogTitle></DialogHeader>
+          {abonoTarget && (
+            <div className="space-y-3">
+              <p className="text-sm text-muted-foreground">
+                {abonoTarget.paciente?.nombres} {abonoTarget.paciente?.apellidos} · Monto {formatPEN(Number(abonoTarget.monto))} · Abonado {formatPEN(Number(abonoTarget.pagado ?? 0))}
+              </p>
+              <div className="space-y-1.5">
+                <Label>Monto a abonar (S/)</Label>
+                <Input type="number" value={abonoMonto} onChange={(e) => setAbonoMonto(e.target.value)} />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Método</Label>
+                <Select value={abonoMetodo} onValueChange={setAbonoMetodo}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>{METODOS_PAGO.map((m) => <SelectItem key={m} value={m}>{m}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setAbonoTarget(null)}>Cancelar</Button>
+            <Button className="bg-brand-gradient text-white" onClick={registrarAbono}>Registrar abono</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

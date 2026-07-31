@@ -23,6 +23,7 @@ export interface Cita {
   hora: string;
   motivo?: string | null;
   monto: number | string;
+  pagado?: number | string;
   metodoPago?: string | null;
   estadoPago: string; // Pagado | Pendiente
   estado: string; // Programada | Asistió | No asistió | Cancelada

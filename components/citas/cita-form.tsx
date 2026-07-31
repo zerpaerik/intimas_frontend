@@ -9,7 +9,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { api } from "@/lib/api/client";
@@ -40,7 +39,7 @@ export function CitaForm() {
   const [motivo, setMotivo] = React.useState("");
   const [monto, setMonto] = React.useState("");
   const [metodoPago, setMetodoPago] = React.useState("Efectivo");
-  const [pagado, setPagado] = React.useState(false);
+  const [abono, setAbono] = React.useState("");
   const [observaciones, setObservaciones] = React.useState("");
   const [saving, setSaving] = React.useState(false);
 
@@ -60,7 +59,7 @@ export function CitaForm() {
         motivo: motivo.trim() || undefined,
         monto: monto === "" ? 0 : Number(monto),
         metodoPago,
-        estadoPago: pagado ? "Pagado" : "Pendiente",
+        pagado: abono === "" ? 0 : Number(abono),
         sedeId: sedeId ?? undefined,
         observaciones: observaciones.trim() || undefined,
       });
@@ -158,10 +157,14 @@ export function CitaForm() {
           )}
         </section>
 
-        <section className="grid gap-4 rounded-2xl border bg-card p-5 sm:grid-cols-2">
+        <section className="grid gap-4 rounded-2xl border bg-card p-5 sm:grid-cols-3">
           <div className="space-y-1.5">
-            <Label>Monto (S/)</Label>
+            <Label>Monto total (S/)</Label>
             <Input type="number" value={monto} onChange={(e) => setMonto(e.target.value)} placeholder="0.00" />
+          </div>
+          <div className="space-y-1.5">
+            <Label>Abono ahora (S/)</Label>
+            <Input type="number" value={abono} onChange={(e) => setAbono(e.target.value)} placeholder="0.00" />
           </div>
           <div className="space-y-1.5">
             <Label>Método de pago</Label>
@@ -170,12 +173,9 @@ export function CitaForm() {
               <SelectContent>{METODOS_PAGO.map((m) => <SelectItem key={m} value={m}>{m}</SelectItem>)}</SelectContent>
             </Select>
           </div>
-          <div className="flex items-center gap-2 sm:col-span-2">
-            <Switch id="pagado" checked={pagado} onCheckedChange={setPagado} />
-            <Label htmlFor="pagado" className="text-sm font-normal text-muted-foreground">
-              Ya pagó (si lo dejas apagado, la cita queda <strong>pendiente de pago</strong>)
-            </Label>
-          </div>
+          <p className="text-xs text-muted-foreground sm:col-span-3">
+            Abono 0 = queda <strong>pendiente</strong>. Menos que el monto = <strong>parcial</strong> (el saldo queda por cobrar). Igual al monto = <strong>pagada</strong>.
+          </p>
         </section>
 
         <section className="rounded-2xl border bg-card p-5">
