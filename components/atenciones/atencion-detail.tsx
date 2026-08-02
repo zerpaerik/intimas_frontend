@@ -11,10 +11,14 @@ import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { formatPEN, formatDateLong, initials } from "@/lib/format";
 import { useApiItem } from "@/lib/api/hooks";
-import { isToday, type Atencion, type AtnEstado } from "@/lib/api/atenciones";
+import { api } from "@/lib/api/client";
+import { METODOS_PAGO, isToday, type Atencion, type AtnEstado } from "@/lib/api/atenciones";
 import { useAuth } from "@/lib/auth/store";
 import { CobroDialog } from "./cobro-dialog";
 import { AnularDialog } from "./anular-dialog";
@@ -35,6 +39,12 @@ export function AtencionDetail({ id }: { id: number }) {
   const { data: atencion, loading, refetch } = useApiItem<Atencion>(id ? `/atenciones/${id}` : null);
   const [cobroOpen, setCobroOpen] = React.useState(false);
   const [anularOpen, setAnularOpen] = React.useState(false);
+  const [metodoSaving, setMetodoSaving] = React.useState(false);
+
+  async function cambiarMetodo(metodo: string) {
+    setMetodoSaving(true);
+    try { await api.patch(`/atenciones/${id}/metodo`, { metodo }); await refetch(); } finally { setMetodoSaving(false); }
+  }
 
   const anulada = !!atencion?.anulada;
   const puedeEditar = !!atencion && !anulada && (isToday(atencion.fecha) || roleId === 1);
@@ -95,6 +105,7 @@ export function AtencionDetail({ id }: { id: number }) {
   const nombre = `${atencion.paciente?.nombres ?? ""} ${atencion.paciente?.apellidos ?? ""}`.trim();
   const dt = new Date(atencion.fecha);
   const color = anulada ? "#64748b" : (ESTADO_COLOR[atencion.estado] ?? "#64748b");
+  const metodoActual = atencion.pagos.length && atencion.pagos.every((p) => p.metodo === atencion.pagos[0].metodo) ? atencion.pagos[0].metodo : "";
 
   return (
     <div>
@@ -186,13 +197,21 @@ export function AtencionDetail({ id }: { id: number }) {
 
           <Card>
             <CardHeader>
-              <div className="flex items-center justify-between">
+              <div className="flex flex-wrap items-center justify-between gap-2">
                 <CardTitle>Pagos</CardTitle>
-                {!anulada && saldo > 0 && (
-                  <Button size="sm" variant="outline" onClick={() => setCobroOpen(true)}>
-                    <HandCoins className="h-4 w-4" /> Abonar
-                  </Button>
-                )}
+                <div className="flex items-center gap-2">
+                  {!anulada && atencion.pagos.length > 0 && (
+                    <Select value={metodoActual || undefined} onValueChange={cambiarMetodo} disabled={metodoSaving}>
+                      <SelectTrigger className="h-8 w-32 text-xs"><SelectValue placeholder="Método…" /></SelectTrigger>
+                      <SelectContent>{METODOS_PAGO.map((m) => <SelectItem key={m} value={m}>{m}</SelectItem>)}</SelectContent>
+                    </Select>
+                  )}
+                  {!anulada && saldo > 0 && (
+                    <Button size="sm" variant="outline" onClick={() => setCobroOpen(true)}>
+                      <HandCoins className="h-4 w-4" /> Abonar
+                    </Button>
+                  )}
+                </div>
               </div>
             </CardHeader>
             <CardContent>
