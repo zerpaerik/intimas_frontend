@@ -80,7 +80,7 @@ function RegistroForm({ mode, initial }: { mode: "create" | "edit"; initial?: At
   const sedeId = useAuth((s) => s.session?.sedeId);
   const personal = useApiList<Row>("/personal");
   const profesionales = useApiList<Row>("/profesionales");
-  const { data: cajaData } = useApiItem<CajaActual>(mode === "create" ? "/caja/actual" : null);
+  const { data: cajaData } = useApiItem<CajaActual>(mode === "create" ? `/caja/actual?sedeId=${sedeId ?? ""}` : null);
   const sinCaja = mode === "create" && !!cajaData && !cajaData.caja;
 
   const [patient, setPatient] = React.useState<Row | null>(

@@ -27,7 +27,7 @@ function horaFecha(iso?: string | null) {
 
 export function CajaPanel() {
   const sedeId = useAuth((s) => s.session?.sedeId);
-  const { data, loading, refetch } = useApiItem<CajaActual>("/caja/actual");
+  const { data, loading, refetch } = useApiItem<CajaActual>(`/caja/actual?sedeId=${sedeId ?? ""}`);
   const [montoInicial, setMontoInicial] = React.useState("");
   const [obsApertura, setObsApertura] = React.useState("");
   const [saving, setSaving] = React.useState(false);
@@ -60,7 +60,7 @@ export function CajaPanel() {
         </CardHeader>
         <CardContent className="space-y-4 pt-5">
           <p className="text-sm text-muted-foreground">
-            No tienes una caja abierta. Ábrela para registrar atenciones, cobros y gastos.
+            No hay un turno de caja abierto en esta sede. Ábrelo para registrar atenciones, cobros y gastos. Se pueden abrir varios turnos al día.
           </p>
           <div className="space-y-1.5">
             <Label htmlFor="monto">Monto inicial / fondo (S/)</Label>
