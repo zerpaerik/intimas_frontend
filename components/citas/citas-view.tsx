@@ -190,6 +190,7 @@ export function CitasView() {
                 const saldo = Number(c.monto) - Number(c.pagado ?? 0);
                 const pendiente = saldo > 0.001;
                 const cerrada = c.estado === "Asistió" || c.estado === "No asistió" || c.estado === "Cancelada";
+                const atencionId = c.atenciones?.[0]?.id;
                 return (
                   <div key={c.id} className="p-3">
                     <div className="flex items-start justify-between gap-2">
@@ -205,7 +206,9 @@ export function CitasView() {
                       </div>
                       <div className="text-right">
                         {Number(c.monto) > 0 && <div className="text-sm font-medium tabular-nums">{formatPEN(Number(c.monto))}</div>}
-                        {pendiente ? (
+                        {atencionId ? (
+                          <span className="text-[11px] font-medium text-brand">En atención</span>
+                        ) : pendiente ? (
                           <span className="text-[11px] font-medium text-destructive">Saldo {formatPEN(saldo)}</span>
                         ) : Number(c.monto) > 0 ? (
                           <span className="text-[11px] font-medium text-success">Pagada</span>
@@ -220,7 +223,16 @@ export function CitasView() {
                           <Button size="sm" variant="outline" className="h-7 text-muted-foreground" onClick={() => marcar(c, "Cancelada")}><Ban className="h-3.5 w-3.5" /> Cancelar</Button>
                         </>
                       )}
-                      {pendiente && <Button size="sm" className="h-7 bg-brand-gradient text-white" onClick={() => abrirCobro(c)}><HandCoins className="h-3.5 w-3.5" /> Cobrar</Button>}
+                      {atencionId ? (
+                        <Button asChild size="sm" variant="outline" className="h-7 text-brand">
+                          <Link href={`/movimientos/atenciones/${atencionId}`}><Stethoscope className="h-3.5 w-3.5" /> Ver atención</Link>
+                        </Button>
+                      ) : c.estado === "Asistió" ? (
+                        <Button asChild size="sm" className="h-7 bg-brand-gradient text-white">
+                          <Link href={`/movimientos/atenciones/nueva?citaId=${c.id}`}><Stethoscope className="h-3.5 w-3.5" /> Registrar atención</Link>
+                        </Button>
+                      ) : null}
+                      {pendiente && !atencionId && <Button size="sm" variant="outline" className="h-7" onClick={() => abrirCobro(c)}><HandCoins className="h-3.5 w-3.5" /> Cobrar</Button>}
                     </div>
                   </div>
                 );

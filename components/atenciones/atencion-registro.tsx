@@ -20,6 +20,7 @@ import { formatPEN } from "@/lib/format";
 import { api } from "@/lib/api/client";
 import { useApiItem, useApiList } from "@/lib/api/hooks";
 import { METODOS_PAGO, type Atencion } from "@/lib/api/atenciones";
+import type { Cita } from "@/lib/api/citas";
 import { type CajaActual } from "@/lib/api/caja";
 import { useAuth } from "@/lib/auth/store";
 import type { Row } from "@/lib/resources/types";
@@ -75,33 +76,38 @@ function Step({ n, title, children, icon: Icon }: { n: number; title: string; ic
   );
 }
 
-function RegistroForm({ mode, initial }: { mode: "create" | "edit"; initial?: Atencion }) {
+function RegistroForm({ mode, initial, cita }: { mode: "create" | "edit"; initial?: Atencion; cita?: Cita }) {
   const router = useRouter();
   const sedeId = useAuth((s) => s.session?.sedeId);
+  const esConversion = mode === "create" && !!cita;
   const personal = useApiList<Row>("/personal");
   const profesionales = useApiList<Row>("/profesionales");
   const { data: cajaData } = useApiItem<CajaActual>(mode === "create" ? `/caja/actual?sedeId=${sedeId ?? ""}` : null);
   const sinCaja = mode === "create" && !!cajaData && !cajaData.caja;
 
   const [patient, setPatient] = React.useState<Row | null>(
-    initial ? ({ ...initial.paciente } as unknown as Row) : null,
+    cita?.paciente ? ({ ...cita.paciente } as unknown as Row)
+      : initial ? ({ ...initial.paciente } as unknown as Row) : null,
   );
   const [origenTipo, setOrigenTipo] = React.useState(
-    initial?.origenTipo === "Particular" ? "Particular"
+    cita ? "Interno"
+      : initial?.origenTipo === "Particular" ? "Particular"
       : initial?.origenTipo === "Externo" || initial?.origenTipo === "Profesional" ? "Externo"
       : "Interno",
   );
-  const [origenValor, setOrigenValor] = React.useState(initial?.origenValor ?? "");
+  const [origenValor, setOrigenValor] = React.useState(cita?.medico?.nombre ?? initial?.origenValor ?? "");
   const [items, setItems] = React.useState<LineItem[]>(
-    initial ? initial.items.map((it, i) => ({ uid: i + 1, kind: it.kind, nombre: it.nombre, monto: Number(it.monto) })) : [],
+    cita
+      ? [{ uid: 1, kind: "Servicio", nombre: cita.motivo || "Cita agendada", monto: Number(cita.monto) || 0 }]
+      : initial ? initial.items.map((it, i) => ({ uid: i + 1, kind: it.kind, nombre: it.nombre, monto: Number(it.monto) })) : [],
   );
-  const [observaciones, setObservaciones] = React.useState(initial?.observaciones ?? "");
-  const [pagos, setPagos] = React.useState<PayLine[]>([{ uid: 1, monto: 0, metodo: "Efectivo" }]);
+  const [observaciones, setObservaciones] = React.useState(cita?.observaciones ?? initial?.observaciones ?? "");
+  const [pagos, setPagos] = React.useState<PayLine[]>([{ uid: 1, monto: 0, metodo: cita?.metodoPago ?? "Efectivo" }]);
   const [pickerOpen, setPickerOpen] = React.useState(false);
   const [saving, setSaving] = React.useState(false);
-  const uid = React.useRef((initial?.items.length ?? 0) + 1);
+  const uid = React.useRef(cita ? 2 : (initial?.items.length ?? 0) + 1);
   const payUid = React.useRef(2);
-  const pagosTouched = React.useRef(false);
+  const pagosTouched = React.useRef(esConversion);
 
   const origenOptions = React.useMemo(() => {
     const base = (
@@ -114,9 +120,12 @@ function RegistroForm({ mode, initial }: { mode: "create" | "edit"; initial?: At
   }, [origenTipo, personal.data, profesionales.data, origenValor]);
 
   const total = items.reduce((a, b) => a + (Number(b.monto) || 0), 0);
-  const abonado = mode === "edit"
-    ? Number(initial?.pagado ?? 0)
-    : pagos.reduce((a, b) => a + (Number(b.monto) || 0), 0);
+  const abonoHeredado = esConversion ? Number(cita?.pagado ?? 0) : 0;
+  const abonado = esConversion
+    ? abonoHeredado
+    : mode === "edit"
+      ? Number(initial?.pagado ?? 0)
+      : pagos.reduce((a, b) => a + (Number(b.monto) || 0), 0);
   const saldo = total - abonado;
 
   // En creación: mientras no se toque el abono, sincronízalo al total (pago completo por defecto).
@@ -195,8 +204,9 @@ function RegistroForm({ mode, initial }: { mode: "create" | "edit"; initial?: At
           origenTipo,
           origenValor,
           observaciones,
+          citaId: cita?.id,
           items: items.map((it) => ({ kind: it.kind, nombre: it.nombre, monto: it.monto })),
-          pagos: pagos.filter((p) => (Number(p.monto) || 0) > 0).map((p) => ({ monto: p.monto, metodo: p.metodo })),
+          pagos: esConversion ? [] : pagos.filter((p) => (Number(p.monto) || 0) > 0).map((p) => ({ monto: p.monto, metodo: p.metodo })),
           consultas: items
             .filter((it) => it.esConsulta)
             .map((it) => ({
@@ -352,7 +362,7 @@ function RegistroForm({ mode, initial }: { mode: "create" | "edit"; initial?: At
             </Button>
           </Step>
 
-          {mode === "create" && (
+          {mode === "create" && !esConversion && (
             <Step n={4} title="Abono inicial" icon={HandCoins}>
               <p className="mb-3 text-xs text-muted-foreground">
                 El abono es sobre el total ({formatPEN(total)}). Puede ser parcial y dividirse en varios métodos (ej. S/100 tarjeta + S/50 efectivo + S/50 yape). Lo que falte quedará como cobro pendiente.
@@ -389,7 +399,19 @@ function RegistroForm({ mode, initial }: { mode: "create" | "edit"; initial?: At
             </Step>
           )}
 
-          <Step n={mode === "create" ? 5 : 4} title="Observaciones" icon={ClipboardCheck}>
+          {esConversion && (
+            <div className="rounded-2xl border border-brand/30 bg-brand/5 p-4 text-sm">
+              <p className="flex items-center gap-2 font-semibold text-brand">
+                <HandCoins className="h-4 w-4" /> Atención desde una cita
+              </p>
+              <p className="mt-1 text-muted-foreground">
+                El abono de la cita (<strong>{formatPEN(abonoHeredado)}</strong>) se hereda automáticamente; no se vuelve a cobrar. El{" "}
+                <strong>saldo{saldo > 0.001 ? ` de ${formatPEN(saldo)}` : ""}</strong> se cobra desde el detalle de la atención (botón “Abonar”).
+              </p>
+            </div>
+          )}
+
+          <Step n={esConversion ? 4 : mode === "create" ? 5 : 4} title="Observaciones" icon={ClipboardCheck}>
             <Textarea value={observaciones} onChange={(e) => setObservaciones(e.target.value)} placeholder="Notas adicionales de la atención…" rows={3} />
           </Step>
 
@@ -400,7 +422,7 @@ function RegistroForm({ mode, initial }: { mode: "create" | "edit"; initial?: At
                 <p className="font-heading text-xl font-bold">{formatPEN(total)}</p>
               </div>
               <div>
-                <p className="text-xs text-muted-foreground">{mode === "edit" ? "Ya pagado" : "Abonado"}</p>
+                <p className="text-xs text-muted-foreground">{esConversion ? "Abonado (cita)" : mode === "edit" ? "Ya pagado" : "Abonado"}</p>
                 <p className="font-heading text-xl font-bold text-success">{formatPEN(abonado)}</p>
               </div>
               <div>
@@ -409,7 +431,7 @@ function RegistroForm({ mode, initial }: { mode: "create" | "edit"; initial?: At
               </div>
             </div>
 
-            {mode === "create" && total > 0 && (
+            {mode === "create" && !esConversion && total > 0 && (
               abonado > total + 0.001 ? (
                 <p className="mt-3 flex items-center gap-2 rounded-lg border border-amber-500/30 bg-amber-500/5 px-3 py-2 text-xs text-amber-600">
                   <AlertTriangle className="h-4 w-4 shrink-0" />
@@ -469,10 +491,11 @@ function RegistroForm({ mode, initial }: { mode: "create" | "edit"; initial?: At
   );
 }
 
-export function AtencionRegistro({ atencionId }: { atencionId?: number }) {
+export function AtencionRegistro({ atencionId, citaId }: { atencionId?: number; citaId?: number }) {
   const router = useRouter();
   const mode: "create" | "edit" = atencionId ? "edit" : "create";
   const { data: existing, loading } = useApiItem<Atencion>(atencionId ? `/atenciones/${atencionId}` : null);
+  const { data: cita, loading: citaLoading } = useApiItem<Cita>(citaId ? `/citas/${citaId}` : null);
 
   if (mode === "edit" && loading) {
     return <Skeleton className="h-[28rem] w-full rounded-2xl" />;
@@ -487,6 +510,25 @@ export function AtencionRegistro({ atencionId }: { atencionId?: number }) {
       </div>
     );
   }
+  if (citaId && citaLoading) {
+    return <Skeleton className="h-[28rem] w-full rounded-2xl" />;
+  }
+  if (citaId && !cita) {
+    return (
+      <div className="rounded-2xl border border-dashed py-20 text-center text-muted-foreground">
+        No se encontró la cita a convertir.
+        <div className="mt-4">
+          <Button variant="outline" onClick={() => router.push("/citas")}>Volver a citas</Button>
+        </div>
+      </div>
+    );
+  }
 
-  return <RegistroForm mode={mode} initial={mode === "edit" ? existing ?? undefined : undefined} />;
+  return (
+    <RegistroForm
+      mode={mode}
+      initial={mode === "edit" ? existing ?? undefined : undefined}
+      cita={citaId ? cita ?? undefined : undefined}
+    />
+  );
 }

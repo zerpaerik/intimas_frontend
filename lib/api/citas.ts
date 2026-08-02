@@ -28,6 +28,7 @@ export interface Cita {
   estadoPago: string; // Pagado | Pendiente
   estado: string; // Programada | Asistió | No asistió | Cancelada
   observaciones?: string | null;
+  atenciones?: { id: number }[]; // atención(es) generada(s) desde esta cita
 }
 
 export const CITA_ESTADOS = ["Programada", "Asistió", "No asistió", "Cancelada"] as const;
