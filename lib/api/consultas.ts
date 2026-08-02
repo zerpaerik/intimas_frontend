@@ -214,6 +214,12 @@ export interface Consulta {
   especialistaId?: number | null;
   especialista?: ConsultaEspecialista | null;
   estado: ConsultaEstado;
+  triajePeso?: string | null;
+  triajeFc?: string | null;
+  triajeFr?: string | null;
+  triajePa?: string | null;
+  triajeTalla?: string | null;
+  triajeTemp?: string | null;
   historia?: HistoriaClinica | null;
   control?: (ControlPrenatal & { gestacion?: Gestacion | null }) | null;
   pediatrica?: HistoriaPediatrica | null;

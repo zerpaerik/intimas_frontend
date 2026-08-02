@@ -14,11 +14,16 @@ import {
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
+import {
+  Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { formatPEN, formatDateLong, initials } from "@/lib/format";
 import { useApiItem } from "@/lib/api/hooks";
 import { api } from "@/lib/api/client";
-import { METODOS_PAGO, isToday, type Atencion, type AtnEstado } from "@/lib/api/atenciones";
+import { METODOS_PAGO, isToday, type Atencion, type AtnConsulta, type AtnEstado } from "@/lib/api/atenciones";
 import { useAuth } from "@/lib/auth/store";
 import { CobroDialog } from "./cobro-dialog";
 import { AnularDialog } from "./anular-dialog";
@@ -40,10 +45,22 @@ export function AtencionDetail({ id }: { id: number }) {
   const [cobroOpen, setCobroOpen] = React.useState(false);
   const [anularOpen, setAnularOpen] = React.useState(false);
   const [metodoSaving, setMetodoSaving] = React.useState(false);
+  const [triajeTarget, setTriajeTarget] = React.useState<AtnConsulta | null>(null);
+  const [tri, setTri] = React.useState<Record<string, string>>({});
+  const [triSaving, setTriSaving] = React.useState(false);
 
   async function cambiarMetodo(metodo: string) {
     setMetodoSaving(true);
     try { await api.patch(`/atenciones/${id}/metodo`, { metodo }); await refetch(); } finally { setMetodoSaving(false); }
+  }
+  function abrirTriaje(co: AtnConsulta) {
+    setTriajeTarget(co);
+    setTri({ peso: co.triajePeso ?? "", fc: co.triajeFc ?? "", fr: co.triajeFr ?? "", presionArterial: co.triajePa ?? "", talla: co.triajeTalla ?? "", temperatura: co.triajeTemp ?? "" });
+  }
+  async function guardarTriaje() {
+    if (!triajeTarget) return;
+    setTriSaving(true);
+    try { await api.post(`/consultas/${triajeTarget.id}/triaje`, tri); await refetch(); setTriajeTarget(null); } finally { setTriSaving(false); }
   }
 
   const anulada = !!atencion?.anulada;
@@ -267,9 +284,12 @@ export function AtencionDetail({ id }: { id: number }) {
                           {co.especialista ? `${co.especialista.nombres} ${co.especialista.apellidos}` : "Sin especialista asignado"}
                         </p>
                       </div>
-                      <Button asChild size="sm" variant={atendida ? "outline" : "default"} className={cn(!atendida && "bg-brand-gradient text-white")}>
-                        <Link href={`/consultas/${co.id}/atender`}>{atendida ? "Ver" : "Atender"}</Link>
-                      </Button>
+                      <div className="flex items-center gap-1.5">
+                        {!anulada && <Button size="sm" variant="outline" onClick={() => abrirTriaje(co)}>Triaje</Button>}
+                        <Button asChild size="sm" variant={atendida ? "outline" : "default"} className={cn(!atendida && "bg-brand-gradient text-white")}>
+                          <Link href={`/consultas/${co.id}/atender`}>{atendida ? "Ver" : "Atender"}</Link>
+                        </Button>
+                      </div>
                     </div>
                   );
                 })}
@@ -289,6 +309,27 @@ export function AtencionDetail({ id }: { id: number }) {
           <PatientHistory patient={atencion.paciente as unknown as Row} onCobro={refetch} />
         </div>
       </div>
+
+      <Dialog open={!!triajeTarget} onOpenChange={(o) => !o && setTriajeTarget(null)}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Triaje · funciones vitales</DialogTitle></DialogHeader>
+          <div className="grid grid-cols-3 gap-3">
+            {[
+              { k: "peso", l: "Peso (kg)" }, { k: "fc", l: "FC" }, { k: "fr", l: "FR" },
+              { k: "presionArterial", l: "P/A" }, { k: "talla", l: "Talla (m)" }, { k: "temperatura", l: "T° (°C)" },
+            ].map((f) => (
+              <div key={f.k} className="space-y-1.5">
+                <Label>{f.l}</Label>
+                <Input value={tri[f.k] ?? ""} onChange={(e) => setTri((t) => ({ ...t, [f.k]: e.target.value }))} />
+              </div>
+            ))}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setTriajeTarget(null)}>Cancelar</Button>
+            <Button className="bg-brand-gradient text-white" onClick={guardarTriaje} disabled={triSaving}>Guardar triaje</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <CobroDialog
         open={cobroOpen}

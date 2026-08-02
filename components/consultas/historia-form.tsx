@@ -47,7 +47,7 @@ export function HistoriaForm({ consulta }: { consulta: Consulta }) {
 
   const [form, setForm] = React.useState<Record<string, string>>({
     enfInicio: v(h?.enfInicio), enfCurso: v(h?.enfCurso), enfRelato: v(h?.enfRelato),
-    peso: v(h?.peso), fc: v(h?.fc), fr: v(h?.fr), presionArterial: v(h?.presionArterial), talla: v(h?.talla), temperatura: v(h?.temperatura),
+    peso: v(h?.peso ?? consulta.triajePeso), fc: v(h?.fc ?? consulta.triajeFc), fr: v(h?.fr ?? consulta.triajeFr), presionArterial: v(h?.presionArterial ?? consulta.triajePa), talla: v(h?.talla ?? consulta.triajeTalla), temperatura: v(h?.temperatura ?? consulta.triajeTemp),
     examenGeneral: v(h?.examenGeneral), procedimientos: v(h?.procedimientos), observaciones: v(h?.observaciones),
     antPersonales: v(p?.antPersonales), antFamiliares: v(p?.antFamiliares), antEpidemiologicos: v(p?.antEpidemiologicos),
     antQuirurgicos: v(p?.antQuirurgicos), antOtros: v(p?.antOtros),
@@ -191,7 +191,7 @@ export function HistoriaForm({ consulta }: { consulta: Consulta }) {
 
         {/* 4 · Examen clínico */}
         <Card>
-          <CardHeader><CardTitle>Examen clínico · funciones vitales</CardTitle></CardHeader>
+          <CardHeader><CardTitle>Triaje · funciones vitales <span className="text-xs font-normal text-muted-foreground">(lo carga recepción)</span></CardTitle></CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-2 gap-x-5 gap-y-4 sm:grid-cols-6">
               <Campo label="Peso (kg)"><Input value={g("peso")} onChange={(e) => set("peso", e.target.value)} /></Campo>

@@ -63,6 +63,12 @@ export interface AtnConsulta {
   especialista?: { id: number; nombres: string; apellidos: string } | null;
   historia?: { id: number } | null;
   control?: { id: number } | null;
+  triajePeso?: string | null;
+  triajeFc?: string | null;
+  triajeFr?: string | null;
+  triajePa?: string | null;
+  triajeTalla?: string | null;
+  triajeTemp?: string | null;
 }
 
 export function isToday(iso: string): boolean {
