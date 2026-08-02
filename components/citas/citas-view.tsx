@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
+import { toast } from "sonner";
 import {
   Ban, CalendarDays, CheckCircle2, ChevronLeft, ChevronRight, HandCoins, Loader2, Plus, Stethoscope, XCircle,
 } from "lucide-react";
@@ -94,9 +95,12 @@ export function CitasView() {
     if (!abonoTarget) return;
     try {
       await api.post(`/citas/${abonoTarget.id}/abono`, { monto: Number(abonoMonto) || 0, metodoPago: abonoMetodo });
+      toast.success("Abono registrado");
       setAbonoTarget(null);
       refetch();
-    } catch { /* noop */ }
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "No se pudo registrar el abono");
+    }
   }
 
   return (

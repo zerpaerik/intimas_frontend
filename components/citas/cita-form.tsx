@@ -174,7 +174,7 @@ export function CitaForm() {
             </Select>
           </div>
           <p className="text-xs text-muted-foreground sm:col-span-3">
-            Abono 0 = queda <strong>pendiente</strong>. Menos que el monto = <strong>parcial</strong> (el saldo queda por cobrar). Igual al monto = <strong>pagada</strong>.
+            Abono 0 = queda <strong>pendiente</strong>. Menos que el monto = <strong>parcial</strong> (el saldo queda por cobrar). Igual al monto = <strong>pagada</strong>. El abono se cobra en el <strong>turno de caja abierto</strong> y suma hoy.
           </p>
         </section>
 
