@@ -216,7 +216,7 @@ export const NAV: NavGroup[] = [
       // Ocultado temporalmente:
       // { label: "Roles", href: "/administrativo/roles", icon: ShieldCheck, roles: [1] },
       { label: "Activos", href: "/administrativo/activos", icon: MonitorSmartphone, roles: [1] },
-      { label: "Cambiar Contraseña", href: "/administrativo/contrasena", icon: KeyRound, roles: ALL },
+      { label: "Cambiar Contraseña", href: "/administrativo/contrasena", icon: KeyRound, roles: ALL, built: true },
     ],
   },
 ];
