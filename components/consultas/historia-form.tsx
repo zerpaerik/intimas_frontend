@@ -160,24 +160,13 @@ export function HistoriaForm({ consulta }: { consulta: Consulta }) {
       <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
         <div className="space-y-4 min-w-0">
         <fieldset disabled={cerrada} className="m-0 space-y-4 border-0 p-0">
-        {/* Familiar + Facebook */}
-        <Card>
-          <CardHeader><CardTitle>Familiar / contacto</CardTitle></CardHeader>
-          <CardContent className="grid grid-cols-1 gap-x-5 gap-y-4 sm:grid-cols-4">
-            <Campo label="Nombres y apellidos" span={2}><Input value={g("familiarNombre")} onChange={(e) => set("familiarNombre", e.target.value)} /></Campo>
-            <Campo label="Parentesco"><Input value={g("familiarParentesco")} onChange={(e) => set("familiarParentesco", e.target.value)} /></Campo>
-            <Campo label="DNI"><Input value={g("familiarDni")} onChange={(e) => set("familiarDni", e.target.value)} /></Campo>
-            {gineco && <Campo label="Facebook" span={2}><Input value={g("facebook")} onChange={(e) => set("facebook", e.target.value)} /></Campo>}
-          </CardContent>
-        </Card>
-
         {/* 2 · Enfermedad actual */}
         <Card>
           <CardHeader><CardTitle>Enfermedad actual</CardTitle></CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 gap-x-5 gap-y-4 sm:grid-cols-2">
-              <Campo label="Inicio"><Input value={g("enfInicio")} onChange={(e) => set("enfInicio", e.target.value)} /></Campo>
-              <Campo label="Curso"><Input value={g("enfCurso")} onChange={(e) => set("enfCurso", e.target.value)} /></Campo>
+              <Campo label="Inicio"><Textarea value={g("enfInicio")} onChange={(e) => set("enfInicio", e.target.value)} rows={3} /></Campo>
+              <Campo label="Curso"><Textarea value={g("enfCurso")} onChange={(e) => set("enfCurso", e.target.value)} rows={3} /></Campo>
             </div>
             <Campo label="Relato"><Textarea value={g("enfRelato")} onChange={(e) => set("enfRelato", e.target.value)} rows={3} /></Campo>
           </CardContent>

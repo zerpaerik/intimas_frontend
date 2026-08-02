@@ -87,11 +87,6 @@ export function ComprobanteHistoria({ id }: { id: number }) {
               <Field label="N° celular" value={p?.telefono} />
               <div style={{ gridColumn: "span 2" }}><Field label="Fecha de atención" value={formatDateLong(c.fecha)} /></div>
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: "8px 16px", marginTop: 8, borderTop: "1px dashed #e3dde0", paddingTop: 8 }}>
-              <Field label="Familiar" value={p?.familiarNombre} />
-              <Field label="Parentesco" value={p?.familiarParentesco} />
-              <Field label="DNI familiar" value={p?.familiarDni} />
-            </div>
           </Sec>
 
           {/* 2 Enfermedad actual */}

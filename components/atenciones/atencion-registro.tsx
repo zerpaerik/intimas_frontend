@@ -104,10 +104,11 @@ function RegistroForm({ mode, initial }: { mode: "create" | "edit"; initial?: At
   const pagosTouched = React.useRef(false);
 
   const origenOptions = React.useMemo(() => {
-    const base =
+    const base = (
       origenTipo === "Interno"
         ? personal.data.filter((p) => ORIGEN_INTERNO_TIPOS.includes(String(p.tipo))).map((p) => `${p.nombres} ${p.apellidos}`)
-        : profesionales.data.map((p) => `${p.nombres} ${p.apellidos}`);
+        : profesionales.data.map((p) => `${p.nombres} ${p.apellidos}`)
+    ).sort((a, b) => a.localeCompare(b, "es"));
     // Conserva el valor ya guardado aunque hoy quede fuera del filtro (ej. atención antigua).
     return origenValor && !base.includes(origenValor) ? [origenValor, ...base] : base;
   }, [origenTipo, personal.data, profesionales.data, origenValor]);

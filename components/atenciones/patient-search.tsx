@@ -35,6 +35,7 @@ export function PatientSearch({
     numDoc: "",
     sexo: "Femenino",
     telefono: "",
+    fechaNacimiento: "",
   });
 
   // Búsqueda en el SERVIDOR (con debounce): no cargamos los miles de pacientes
@@ -71,6 +72,7 @@ export function PatientSearch({
         numDoc: form.numDoc,
         sexo: form.sexo,
         telefono: form.telefono,
+        fechaNacimiento: form.fechaNacimiento || undefined,
       });
       toast.success("Paciente creado · registro retomado");
       refetch();
@@ -121,12 +123,12 @@ export function PatientSearch({
         </div>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <div className="space-y-1.5">
-            <Label htmlFor="qc-nombres">Nombres *</Label>
-            <Input id="qc-nombres" value={form.nombres} onChange={(e) => setForm({ ...form, nombres: e.target.value })} />
-          </div>
-          <div className="space-y-1.5">
             <Label htmlFor="qc-apellidos">Apellidos *</Label>
             <Input id="qc-apellidos" value={form.apellidos} onChange={(e) => setForm({ ...form, apellidos: e.target.value })} />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="qc-nombres">Nombres *</Label>
+            <Input id="qc-nombres" value={form.nombres} onChange={(e) => setForm({ ...form, nombres: e.target.value })} />
           </div>
           <div className="space-y-1.5">
             <Label>Tipo doc.</Label>
@@ -156,6 +158,10 @@ export function PatientSearch({
           <div className="space-y-1.5">
             <Label htmlFor="qc-tel">Teléfono</Label>
             <Input id="qc-tel" value={form.telefono} onChange={(e) => setForm({ ...form, telefono: e.target.value })} />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="qc-fnac">Fecha de nacimiento</Label>
+            <Input id="qc-fnac" type="date" value={form.fechaNacimiento} onChange={(e) => setForm({ ...form, fechaNacimiento: e.target.value })} />
           </div>
         </div>
         <Button className="mt-4 w-full bg-brand-gradient text-white" onClick={submitCreate} disabled={saving}>

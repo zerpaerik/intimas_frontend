@@ -141,7 +141,6 @@ export const NAV: NavGroup[] = [
     items: [
       { label: "Lista de Consultas", href: "/consultas/lista", icon: NotebookPen, roles: [1, 2, 7, 10], built: true },
       { label: "Ver Historias", href: "/consultas/historias", icon: NotebookPen, roles: [1, 2, 7, 10], built: true },
-      { label: "Ver Controles", href: "/consultas/controles", icon: NotebookPen, roles: [1, 2, 7, 10], built: true },
     ],
   },
   /* Quitado a pedido del cliente:
